@@ -32,6 +32,9 @@ class SyrHousingManager:
         self.frontend_port = 5173
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
 
+        # Auto-start option (must be before setup_ui)
+        self.auto_start = tk.BooleanVar(value=True)
+
         # Setup UI
         self.setup_ui()
 
@@ -39,8 +42,7 @@ class SyrHousingManager:
         self.check_status_thread = threading.Thread(target=self.status_checker, daemon=True)
         self.check_status_thread.start()
 
-        # Auto-start option
-        self.auto_start = tk.BooleanVar(value=True)
+        # Auto-start backend if enabled
         if self.auto_start.get():
             self.root.after(1000, self.start_backend)
 
