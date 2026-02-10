@@ -1,0 +1,12 @@
+{
+  "roof": 3,
+  "heating": 2,
+  "structural": 4,
+  "electrical": 4,
+  "plumbing": 3,
+  "windows": 4,
+  "doors": 5,
+  "lead": 7,
+  "mold": 6,
+  "accessibility": 6
+}

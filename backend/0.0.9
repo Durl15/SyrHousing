@@ -1,0 +1,44 @@
+Collecting python-jose[cryptography]
+  Obtaining dependency information for python-jose[cryptography] from https://files.pythonhosted.org/packages/d9/c3/0bd11992072e6a1c513b16500a5d07f91a24017c5909b02c72c62d7ad024/python_jose-3.5.0-py2.py3-none-any.whl.metadata
+  Downloading python_jose-3.5.0-py2.py3-none-any.whl.metadata (5.5 kB)
+Collecting passlib[bcrypt]
+  Obtaining dependency information for passlib[bcrypt] from https://files.pythonhosted.org/packages/3b/a4/ab6b7589382ca3df236e03faa71deac88cae040af60c071a78d254a62172/passlib-1.7.4-py2.py3-none-any.whl.metadata
+  Downloading passlib-1.7.4-py2.py3-none-any.whl.metadata (1.7 kB)
+Requirement already satisfied: python-multipart in c:\users\admin\.pyenv\pyenv-win\versions\3.12.0\lib\site-packages (0.0.20)
+Collecting ecdsa!=0.15 (from python-jose[cryptography])
+  Obtaining dependency information for ecdsa!=0.15 from https://files.pythonhosted.org/packages/cb/a3/460c57f094a4a165c84a1341c373b0a4f5ec6ac244b998d5021aade89b77/ecdsa-0.19.1-py2.py3-none-any.whl.metadata
+  Downloading ecdsa-0.19.1-py2.py3-none-any.whl.metadata (29 kB)
+Collecting rsa!=4.1.1,!=4.4,<5.0,>=4.0 (from python-jose[cryptography])
+  Obtaining dependency information for rsa!=4.1.1,!=4.4,<5.0,>=4.0 from https://files.pythonhosted.org/packages/64/8d/0133e4eb4beed9e425d9a98ed6e081a55d195481b7632472be1af08d2f6b/rsa-4.9.1-py3-none-any.whl.metadata
+  Downloading rsa-4.9.1-py3-none-any.whl.metadata (5.6 kB)
+Collecting pyasn1>=0.5.0 (from python-jose[cryptography])
+  Obtaining dependency information for pyasn1>=0.5.0 from https://files.pythonhosted.org/packages/44/b5/a96872e5184f354da9c84ae119971a0a4c221fe9b27a4d94bd43f2596727/pyasn1-0.6.2-py3-none-any.whl.metadata
+  Downloading pyasn1-0.6.2-py3-none-any.whl.metadata (8.4 kB)
+Collecting cryptography>=3.4.0 (from python-jose[cryptography])
+  Obtaining dependency information for cryptography>=3.4.0 from https://files.pythonhosted.org/packages/2d/12/652c84b6f9873f0909374864a57b003686c642ea48c84d6c7e2c515e6da5/cryptography-46.0.4-cp311-abi3-win_amd64.whl.metadata
+  Using cached cryptography-46.0.4-cp311-abi3-win_amd64.whl.metadata (5.7 kB)
+Collecting bcrypt>=3.1.0 (from passlib[bcrypt])
+  Obtaining dependency information for bcrypt>=3.1.0 from https://files.pythonhosted.org/packages/9f/b9/9d9a641194a730bda138b3dfe53f584d61c58cd5230e37566e83ec2ffa0d/bcrypt-5.0.0-cp39-abi3-win_amd64.whl.metadata
+  Downloading bcrypt-5.0.0-cp39-abi3-win_amd64.whl.metadata (10 kB)
+Collecting cffi>=2.0.0 (from cryptography>=3.4.0->python-jose[cryptography])
+  Obtaining dependency information for cffi>=2.0.0 from https://files.pythonhosted.org/packages/f8/ed/13bd4418627013bec4ed6e54283b1959cf6db888048c7cf4b4c3b5b36002/cffi-2.0.0-cp312-cp312-win_amd64.whl.metadata
+  Using cached cffi-2.0.0-cp312-cp312-win_amd64.whl.metadata (2.6 kB)
+Requirement already satisfied: six>=1.9.0 in c:\users\admin\.pyenv\pyenv-win\versions\3.12.0\lib\site-packages (from ecdsa!=0.15->python-jose[cryptography]) (1.17.0)
+Collecting pycparser (from cffi>=2.0.0->cryptography>=3.4.0->python-jose[cryptography])
+  Obtaining dependency information for pycparser from https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl.metadata
+  Using cached pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+Downloading bcrypt-5.0.0-cp39-abi3-win_amd64.whl (150 kB)
+   ---------------------------------------- 150.9/150.9 kB 2.2 MB/s eta 0:00:00
+Using cached cryptography-46.0.4-cp311-abi3-win_amd64.whl (3.5 MB)
+Downloading ecdsa-0.19.1-py2.py3-none-any.whl (150 kB)
+   ---------------------------------------- 150.6/150.6 kB 3.0 MB/s eta 0:00:00
+Downloading pyasn1-0.6.2-py3-none-any.whl (83 kB)
+   ---------------------------------------- 83.4/83.4 kB 4.6 MB/s eta 0:00:00
+Downloading rsa-4.9.1-py3-none-any.whl (34 kB)
+Downloading passlib-1.7.4-py2.py3-none-any.whl (525 kB)
+   ---------------------------------------- 525.6/525.6 kB 6.6 MB/s eta 0:00:00
+Downloading python_jose-3.5.0-py2.py3-none-any.whl (34 kB)
+Using cached cffi-2.0.0-cp312-cp312-win_amd64.whl (183 kB)
+Using cached pycparser-3.0-py3-none-any.whl (48 kB)
+Installing collected packages: passlib, pycparser, pyasn1, ecdsa, bcrypt, rsa, cffi, python-jose, cryptography
+Successfully installed bcrypt-5.0.0 cffi-2.0.0 cryptography-46.0.4 ecdsa-0.19.1 passlib-1.7.4 pyasn1-0.6.2 pycparser-3.0 python-jose-3.5.0 rsa-4.9.1

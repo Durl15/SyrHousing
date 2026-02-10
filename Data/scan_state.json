@@ -1,0 +1,100 @@
+{
+  "hhq_hub": {
+    "name": "Home HeadQuarters - Homeowner Loans & Grants (Syracuse hub)",
+    "url": "https://www.homehq.org/homeowner-loans-grants",
+    "status": "closed",
+    "hash": "05e673b9a2b2caa5333499a15fbd0f2aea63eaff4ca0f6bcdb8bfcb62b07e799",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "restore": {
+    "name": "NYS RESTORE Program (Senior 60+)",
+    "url": "https://hcr.ny.gov/restore-program",
+    "status": "open/unknown",
+    "hash": "051510c1c30243977c5c30a44b924a7b881779edd2de1242fceefb3d3aa32194",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "access_to_home": {
+    "name": "NYS Access to Home Program",
+    "url": "https://hcr.ny.gov/access-home-program",
+    "status": "open/unknown",
+    "hash": "83ca644cafb2a8e0e4796d9f84f06f45e7785ae373acb09addf869d50fd5b0ab",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "peace_weatherization": {
+    "name": "PEACE Inc. Weatherization/Energy Services",
+    "url": "https://www.peace-caa.org/programs/energyhousing/",
+    "status": "open/unknown",
+    "hash": "79b42e1da3aadb5b93e2e3586e3394dbec653386bbc6b828c700d931031ecc61",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "usda_504": {
+    "name": "USDA Section 504 Repair Loans & Grants",
+    "url": "https://www.rd.usda.gov/programs-services/single-family-housing-programs/single-family-housing-repair-loans-grants-18",
+    "status": "open/unknown",
+    "hash": "1b478ef907fdef34a024b3661ec1a83461ed6149a76bfc2effdc56644deb4154",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "hud_title1": {
+    "name": "HUD Title I Property Improvement Loan",
+    "url": "https://www.hud.gov/program_offices/housing/sfh/title",
+    "status": "open/unknown",
+    "hash": "d1bcb4a7a175e17170963f6392b5e9e3b04f043d6f16dca77c8e5bc23727f88a",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "hhq_homeowner": {
+    "name": "Home HeadQuarters \u2013 Homeowner Loans & Grants (master page)",
+    "url": "https://www.homehq.org/homeowner-loans-grants",
+    "status": "closed",
+    "hash": "05e673b9a2b2caa5333499a15fbd0f2aea63eaff4ca0f6bcdb8bfcb62b07e799",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "hcr_restore": {
+    "name": "NYS HCR \u2013 RESTORE Program",
+    "url": "https://hcr.ny.gov/restore-program",
+    "status": "open/unknown",
+    "hash": "051510c1c30243977c5c30a44b924a7b881779edd2de1242fceefb3d3aa32194",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "hcr_access_to_home": {
+    "name": "NYS HCR \u2013 Access to Home Program",
+    "url": "https://hcr.ny.gov/access-home-program",
+    "status": "open/unknown",
+    "hash": "83ca644cafb2a8e0e4796d9f84f06f45e7785ae373acb09addf869d50fd5b0ab",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "peace_energyhousing": {
+    "name": "PEACE Inc. \u2013 Energy & Housing (Weatherization/EmPower+)",
+    "url": "https://www.peace-caa.org/programs/energyhousing/",
+    "status": "open/unknown",
+    "hash": "79b42e1da3aadb5b93e2e3586e3394dbec653386bbc6b828c700d931031ecc61",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "ondss_heap_apply": {
+    "name": "Onondaga DSS \u2013 HEAP Apply (Emergency/Regular)",
+    "url": "https://onondaga.gov/dss/heap/apply/",
+    "status": "open/unknown",
+    "hash": "a19749a82240d08b208b09585f14c2ee66f5b9fddc4bc5341874b01dc74d8a5f",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "occdev_cd": {
+    "name": "Onondaga County Community Development (Programs including Lead)",
+    "url": "https://onondaga.gov/cd/",
+    "status": "open/unknown",
+    "hash": "2e2dab24734826c7e7d9c175b5eb9396461789aae2c0499c6c54d35db7c13971",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "syr_lead_grant": {
+    "name": "City of Syracuse \u2013 Lead Grant Program",
+    "url": "https://www.syr.gov/Departments/NBD/Neighborhood-Development/Syracuse-Lead-Grant-Program",
+    "status": "closed",
+    "hash": "e1f12b6d8a508706439d808c1341766cf6e4ae3da2cb2bf35e02e272e06f6a6a",
+    "last_checked": "2025-12-24T10:36:40"
+  },
+  "hud_title": {
+    "name": "HUD \u2013 Title I Property Improvement (reference page)",
+    "url": "https://www.hud.gov/program_offices/housing/sfh/title",
+    "status": "open/unknown",
+    "hash": "d1bcb4a7a175e17170963f6392b5e9e3b04f043d6f16dca77c8e5bc23727f88a",
+    "last_checked": "2025-12-24T10:36:40"
+  }
+}

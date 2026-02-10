@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/* DJ AI Business Consultant brand palette */
+:root {
+  --brand-primary: #1e3a5f;
+  --brand-secondary: #2d6a9f;
+  --brand-accent: #4a9eda;
+  --brand-silver: #9ca3af;
+  --brand-gold: #c9a84c;
+  --brand-dark: #0f172a;
+  --brand-light: #f8fafc;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: var(--brand-light);
+  color: var(--brand-dark);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--brand-silver); border-radius: 3px; }
