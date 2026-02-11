@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8000/api';
+import api from '../../lib/api';
 
 export default function DiscoveryManagement() {
   const [stats, setStats] = useState(null);
@@ -19,10 +17,7 @@ export default function DiscoveryManagement() {
 
   const loadStats = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/discovery/stats`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/discovery/stats');
       setStats(response.data);
     } catch (error) {
       console.error('Failed to load stats:', error);
@@ -31,9 +26,7 @@ export default function DiscoveryManagement() {
 
   const loadRuns = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/discovery/runs`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await api.get('/discovery/runs', {
         params: { limit: 10 }
       });
       setRuns(response.data);
@@ -44,9 +37,7 @@ export default function DiscoveryManagement() {
 
   const loadGrants = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/discovery/grants`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await api.get('/discovery/grants', {
         params: { status: filter, limit: 50 }
       });
       setGrants(response.data);
@@ -58,11 +49,10 @@ export default function DiscoveryManagement() {
   const runDiscovery = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/discovery/run`,
-        { sources: ['rss_feed'], send_notification: false },
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
+      await api.post('/discovery/run', {
+        sources: ['rss_feed'],
+        send_notification: false
+      });
       alert('Discovery run started! Refresh in a few minutes to see results.');
       setTimeout(() => {
         loadStats();
@@ -79,11 +69,9 @@ export default function DiscoveryManagement() {
     if (!confirm('Approve this grant and create a Program?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/discovery/grants/${grantId}/approve`,
-        { create_program: true },
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
+      await api.post(`/discovery/grants/${grantId}/approve`, {
+        create_program: true
+      });
       alert('Grant approved and Program created!');
       loadGrants();
       loadStats();
@@ -97,11 +85,9 @@ export default function DiscoveryManagement() {
     if (!reason) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/discovery/grants/${grantId}/reject`,
-        { reason },
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
+      await api.post(`/discovery/grants/${grantId}/reject`, {
+        reason
+      });
       alert('Grant rejected');
       loadGrants();
     } catch (error) {
@@ -114,11 +100,9 @@ export default function DiscoveryManagement() {
     if (!programKey) return;
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/discovery/grants/${grantId}/mark-duplicate`,
-        { program_key: programKey },
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
+      await api.post(`/discovery/grants/${grantId}/mark-duplicate`, {
+        program_key: programKey
+      });
       alert('Marked as duplicate');
       loadGrants();
     } catch (error) {

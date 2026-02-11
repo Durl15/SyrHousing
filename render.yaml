@@ -1,0 +1,30 @@
+services:
+  # Backend API
+  - type: web
+    name: syrhousing-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && gunicorn main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # You'll set this manually in Render dashboard
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: '["*"]'
+      - key: DEBUG
+        value: false
+      - key: DISCOVERY_ENABLED
+        value: true
+      - key: FRONTEND_URL
+        sync: false  # Set to your frontend URL after deployment
+
+  # Frontend Static Site
+  - type: web
+    name: syrhousing-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false  # Set to your backend URL after deployment
