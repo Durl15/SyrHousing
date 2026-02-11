@@ -21,6 +21,7 @@ import UserManagement from './pages/admin/UserManagement';
 import ProgramManagement from './pages/admin/ProgramManagement';
 import ApplicationManagement from './pages/admin/ApplicationManagement';
 import ScannerManagement from './pages/admin/ScannerManagement';
+import DiscoveryManagement from './pages/admin/DiscoveryManagement';
 
 export default function App() {
   return (
@@ -115,6 +116,14 @@ export default function App() {
                 element={
                   <AdminRoute>
                     <ScannerManagement />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/discovery"
+                element={
+                  <AdminRoute>
+                    <DiscoveryManagement />
                   </AdminRoute>
                 }
               />
