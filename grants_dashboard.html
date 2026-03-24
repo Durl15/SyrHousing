@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SyrHousing – Grant Dashboard</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #1a2744;
+    --navy-mid:  #243258;
+    --navy-light:#2e4075;
+    --teal:      #0d9488;
+    --teal-light:#14b8a6;
+    --teal-pale: #ccfbf1;
+    --bg:        #f0f4f8;
+    --card-bg:   #ffffff;
+    --text:      #1e293b;
+    --muted:     #64748b;
+    --border:    #e2e8f0;
+    --open:      #16a34a;
+    --soon:      #d97706;
+    --closed:    #dc2626;
+    --shadow:    0 2px 8px rgba(0,0,0,.10);
+    --radius:    10px;
+  }
+
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Header ──────────────────────────────────────────────────────────── */
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--teal);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+  }
+  .header-sub { font-size: .75rem; color: #94a3b8; font-weight: 400; }
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* ── Quiz Card ───────────────────────────────────────────────────────── */
+  .quiz-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border-top: 4px solid var(--teal);
+  }
+  .quiz-card h2 {
+    color: var(--navy);
+    font-size: 1.25rem;
+    margin-bottom: .25rem;
+  }
+  .quiz-card p.hint {
+    color: var(--muted);
+    font-size: .875rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .form-group { display: flex; flex-direction: column; gap: .35rem; }
+  .form-group label {
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .form-group input,
+  .form-group select {
+    padding: .6rem .85rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-size: .95rem;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color .2s;
+    width: 100%;
+  }
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--teal);
+    background: #fff;
+  }
+
+  .form-actions { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .65rem 1.4rem;
+    border: none;
+    border-radius: 7px;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { opacity: .88; }
+  .btn-secondary { background: var(--navy); color: #fff; }
+  .btn-secondary:hover { opacity: .88; }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--teal);
+    color: var(--teal);
+  }
+  .btn-outline:hover { background: var(--teal-pale); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── Filters ─────────────────────────────────────────────────────────── */
+  .filter-bar {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .filter-bar label { font-size: .85rem; font-weight: 600; color: var(--navy); }
+  .filter-pill {
+    padding: .35rem .9rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    font-size: .82rem;
+    cursor: pointer;
+    transition: all .15s;
+    color: var(--muted);
+  }
+  .filter-pill.active {
+    border-color: var(--teal);
+    background: var(--teal-pale);
+    color: var(--teal);
+    font-weight: 600;
+  }
+
+  /* ── Results Header ──────────────────────────────────────────────────── */
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: .75rem;
+  }
+  .results-header h3 { color: var(--navy); font-size: 1.1rem; }
+  .results-header .export-group { display: flex; gap: .6rem; }
+
+  /* ── Grant Cards ─────────────────────────────────────────────────────── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .grant-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow .2s, transform .15s;
+    border: 1.5px solid var(--border);
+  }
+  .grant-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.14); transform: translateY(-2px); }
+
+  .card-header {
+    background: var(--navy);
+    padding: 1rem 1.25rem .85rem;
+    position: relative;
+  }
+  .card-title {
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: .55rem;
+    padding-right: 3.5rem;
+  }
+  .card-meta { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+
+  /* Status badge */
+  .badge {
+    display: inline-block;
+    padding: .18rem .65rem;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .badge-open    { background: #dcfce7; color: var(--open); }
+  .badge-closing { background: #fef3c7; color: var(--soon); }
+  .badge-closed  { background: #fee2e2; color: var(--closed); }
+
+  /* Match score badge */
+  .score-badge {
+    position: absolute;
+    top: 1rem; right: 1.25rem;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    font-size: .65rem;
+    font-weight: 800;
+    border: 2.5px solid rgba(255,255,255,.35);
+  }
+  .score-high  { background: var(--open);   color: #fff; }
+  .score-mid   { background: var(--soon);   color: #fff; }
+  .score-low   { background: var(--closed); color: #fff; }
+
+  /* Card body */
+  .card-body { padding: 1rem 1.25rem; flex: 1; }
+
+  .detail-row {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .6rem;
+    align-items: flex-start;
+    font-size: .875rem;
+  }
+  .detail-label {
+    min-width: 90px;
+    color: var(--muted);
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    padding-top: .05rem;
+  }
+  .detail-value { color: var(--text); line-height: 1.4; }
+
+  .countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .82rem;
+    font-weight: 600;
+    padding: .2rem .55rem;
+    border-radius: 5px;
+    margin-top: .2rem;
+  }
+  .countdown-urgent { background: #fee2e2; color: var(--closed); }
+  .countdown-soon   { background: #fef3c7; color: var(--soon); }
+  .countdown-ok     { background: #dcfce7; color: var(--open); }
+
+  .description {
+    font-size: .85rem;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-top: .5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Card footer */
+  .card-footer {
+    padding: .85rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn-sm {
+    padding: .38rem .9rem;
+    font-size: .8rem;
+    border-radius: 6px;
+  }
+
+  /* ── Empty / Error states ────────────────────────────────────────────── */
+  .state-box {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+  .state-box .icon { font-size: 3rem; margin-bottom: .75rem; }
+  .state-box h3 { font-size: 1.1rem; margin-bottom: .5rem; color: var(--navy); }
+  .state-box p { font-size: .9rem; }
+
+  /* ── Loading spinner ─────────────────────────────────────────────────── */
+  .spinner {
+    display: inline-block;
+    width: 22px; height: 22px;
+    border: 3px solid rgba(255,255,255,.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Modal ───────────────────────────────────────────────────────────── */
+  .modal-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    max-width: 560px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  }
+  .modal-header {
+    background: var(--navy);
+    color: #fff;
+    padding: 1.1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .modal-header h3 { font-size: 1rem; }
+  .modal-close {
+    background: none; border: none; color: #94a3b8;
+    font-size: 1.4rem; cursor: pointer; line-height: 1;
+    transition: color .15s;
+  }
+  .modal-close:hover { color: #fff; }
+  .modal-body { padding: 1.5rem; }
+  .checklist-item {
+    display: flex; gap: .75rem; align-items: flex-start;
+    padding: .6rem 0; border-bottom: 1px solid var(--border);
+    font-size: .9rem;
+  }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type=checkbox] {
+    margin-top: .15rem; accent-color: var(--teal);
+    width: 16px; height: 16px; flex-shrink: 0;
+  }
+
+  /* ── Toast ───────────────────────────────────────────────────────────── */
+  #toast-container {
+    position: fixed;
+    bottom: 1.5rem; right: 1.5rem;
+    z-index: 300;
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .toast {
+    padding: .85rem 1.2rem;
+    border-radius: 8px;
+    color: #fff;
+    font-size: .875rem;
+    font-weight: 500;
+    max-width: 320px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.2);
+    animation: slideIn .25s ease;
+  }
+  .toast-success { background: var(--teal); }
+  .toast-error   { background: var(--closed); }
+  .toast-info    { background: var(--navy-light); }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* ── Responsive ──────────────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    main { padding: 1rem; }
+    .quiz-card { padding: 1.25rem; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    header { padding: 0 1rem; }
+    .logo span.header-sub { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏠</div>
+    <div>
+      SyrHousing
+      <div class="header-sub">Grant Eligibility Dashboard</div>
+    </div>
+  </div>
+  <div style="color:#94a3b8; font-size:.8rem;" id="header-stats">Loading grants…</div>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<main>
+
+  <!-- Eligibility Quiz -->
+  <div class="quiz-card">
+    <h2>Find Grants You Qualify For</h2>
+    <p class="hint">Answer four quick questions to see your personalized, ranked grant list.</p>
+
+    <form id="quiz-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="f-age">Your Age</label>
+          <input type="number" id="f-age" name="age" min="18" max="120" placeholder="e.g. 68" required>
+        </div>
+        <div class="form-group">
+          <label for="f-income">Annual Household Income ($)</label>
+          <input type="number" id="f-income" name="income" min="0" placeholder="e.g. 42000" required>
+        </div>
+        <div class="form-group">
+          <label for="f-proptype">Property Type</label>
+          <select id="f-proptype" name="property_type" required>
+            <option value="">— select —</option>
+            <option value="single_family">Single Family Home</option>
+            <option value="multifamily">Multi-Family (2–4 units)</option>
+            <option value="condo">Condominium</option>
+            <option value="co_op">Co-Op</option>
+            <option value="townhouse">Townhouse</option>
+            <option value="mobile_home">Mobile / Manufactured Home</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-repair">Primary Repair Need</label>
+          <select id="f-repair" name="repair_category" required>
+            <option value="">— select —</option>
+            <option value="emergency_repairs">Emergency Repairs</option>
+            <option value="energy_efficiency">Energy Efficiency</option>
+            <option value="accessibility">Accessibility / ADA</option>
+            <option value="structural">Structural / Code Violations</option>
+            <option value="historic_preservation">Historic Preservation</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="btn-match">
+          <span id="btn-match-text">🔍 Find My Grants</span>
+          <span id="btn-match-spinner" style="display:none"><span class="spinner"></span></span>
+        </button>
+        <button type="button" class="btn btn-outline" id="btn-clear">Clear</button>
+        <label style="font-size:.85rem; color:var(--muted); display:flex; align-items:center; gap:.4rem; cursor:pointer;">
+          <input type="checkbox" id="include-closed" style="accent-color:var(--teal)">
+          Include closed grants
+        </label>
+      </div>
+    </form>
+  </div>
+
+  <!-- Filters (shown after search) -->
+  <div id="filter-section" style="display:none">
+    <div class="filter-bar">
+      <label>Filter by category:</label>
+      <button class="filter-pill active" data-cat="all">All</button>
+      <button class="filter-pill" data-cat="emergency_repairs">🚨 Emergency</button>
+      <button class="filter-pill" data-cat="energy_efficiency">⚡ Energy</button>
+      <button class="filter-pill" data-cat="accessibility">♿ Accessibility</button>
+      <button class="filter-pill" data-cat="structural">🏗 Structural</button>
+      <button class="filter-pill" data-cat="historic_preservation">🏛 Historic</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results-section" style="display:none">
+    <div class="results-header">
+      <h3 id="results-count">0 grants matched</h3>
+      <div class="export-group">
+        <button class="btn btn-secondary btn-sm" id="btn-csv" disabled>⬇ Export CSV</button>
+        <button class="btn btn-secondary btn-sm" id="btn-pdf" disabled>📄 Export PDF</button>
+      </div>
+    </div>
+    <div class="cards-grid" id="cards-container"></div>
+  </div>
+
+  <!-- Initial / empty state -->
+  <div id="initial-state" class="state-box">
+    <div class="icon">🏡</div>
+    <h3>Discover Housing Grants</h3>
+    <p>Fill in the eligibility quiz above to see grants ranked by how well you match.</p>
+  </div>
+
+</main>
+
+<!-- ── Checklist Modal ──────────────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="checklist-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Application Checklist</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ── Toast container ─────────────────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<script>
+// ── Configuration ──────────────────────────────────────────────────────────
+const API_BASE = (() => {
+  // If opened as file://, use localhost. If served via FastAPI, use same origin.
+  return 'https://syrhousing-backend-production.up.railway.app';
+})();
+
+// ── State ──────────────────────────────────────────────────────────────────
+let lastResults = [];
+let lastQuery = {};
+
+// ── Checklist templates by category ───────────────────────────────────────
+const CHECKLISTS = {
+  emergency_repairs: [
+    'Proof of homeownership (deed or mortgage statement)',
+    'Government-issued photo ID',
+    'Most recent federal tax return',
+    'Proof of income (pay stubs / Social Security / pension letters)',
+    'Written description of emergency repair needed',
+    'Two contractor estimates (if required by program)',
+    'Proof of homeowners insurance',
+    'Utility bills (last 3 months)',
+  ],
+  energy_efficiency: [
+    'Proof of homeownership',
+    'Government-issued photo ID',
+    'Most recent federal tax return',
+    'Proof of income for all household members',
+    'Recent utility bills (electric, gas – last 12 months)',
+    'Completed energy audit report (if pre-required)',
+    'Contractor/installer NYSERDA certification number',
+    'Property tax bill (current year)',
+  ],
+  accessibility: [
+    'Proof of homeownership',
+    'Government-issued photo ID',
+    'Most recent federal tax return',
+    'Proof of income for all household members',
+    'Letter from physician or OT documenting disability/mobility need',
+    'Written scope of accessibility modifications',
+    'Two contractor estimates',
+    'Property tax bill (current year)',
+  ],
+  structural: [
+    'Proof of homeownership',
+    'Government-issued photo ID',
+    'Most recent federal tax return',
+    'Proof of income for all household members',
+    'Property inspection report or code violation notice',
+    'Two licensed contractor estimates',
+    'Proof of homeowners insurance',
+    'Property tax bill (current year)',
+    'Mortgage statement (if applicable)',
+  ],
+  historic_preservation: [
+    'Proof of homeownership',
+    'Government-issued photo ID',
+    'Most recent federal tax return',
+    'Proof of income for all household members',
+    'Historic property designation certificate',
+    'Pre-approved scope of work from SHPO',
+    'Two contractor estimates from historically qualified contractors',
+    'Photographs of current property condition',
+    'Property tax bill (current year)',
+  ],
+  default: [
+    'Proof of homeownership (deed or mortgage statement)',
+    'Government-issued photo ID',
+    'Most recent federal tax return',
+    'Proof of income for all household members',
+    'Property tax bill (current year)',
+    'Homeowners insurance documentation',
+    'Completed program application form',
+  ],
+};
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function fmtCurrency(v) {
+  if (v == null) return 'N/A';
+  return '$' + Number(v).toLocaleString();
+}
+
+function fmtList(arr) {
+  if (!arr || !arr.length) return 'Any';
+  return arr.map(s => s.replace(/_/g, ' ')).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ');
+}
+
+function scoreClass(score) {
+  if (score >= 75) return 'score-high';
+  if (score >= 40) return 'score-mid';
+  return 'score-low';
+}
+
+function statusBadge(status) {
+  if (status === 'open') return '<span class="badge badge-open">Open</span>';
+  if (status === 'closing_soon') return '<span class="badge badge-closing">⚠ Closing Soon</span>';
+  return '<span class="badge badge-closed">Closed</span>';
+}
+
+function countdownHtml(deadline) {
+  if (!deadline || deadline === 'rolling' || deadline === 'annual') {
+    return `<div class="countdown countdown-ok">📅 Rolling / Ongoing</div>`;
+  }
+  const d = new Date(deadline);
+  if (isNaN(d)) return `<div class="countdown countdown-ok">📅 ${deadline}</div>`;
+  const now = new Date();
+  const diffMs = d - now;
+  const diffDays = Math.ceil(diffMs / 86400000);
+  if (diffDays < 0) return `<div class="countdown countdown-urgent">✕ Deadline passed</div>`;
+  if (diffDays === 0) return `<div class="countdown countdown-urgent">⏰ Due TODAY</div>`;
+  if (diffDays <= 7) return `<div class="countdown countdown-urgent">⏰ ${diffDays} day${diffDays > 1 ? 's' : ''} left</div>`;
+  if (diffDays <= 30) return `<div class="countdown countdown-soon">⏰ ${diffDays} days left</div>`;
+  return `<div class="countdown countdown-ok">📅 ${d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}</div>`;
+}
+
+// ── Render grant card ──────────────────────────────────────────────────────
+function renderCard(g) {
+  const score = g.match_score;
+  const scoreHtml = score != null
+    ? `<div class="score-badge ${scoreClass(score)}"><span style="font-size:.85rem">${score}</span><span>%</span></div>`
+    : '';
+
+  const ec = g.eligibility_criteria || {};
+  const ecNotes = [];
+  if (ec.requires_owner_occupied) ecNotes.push('Owner-occupied');
+  if (ec.geographic_restriction) ecNotes.push(ec.geographic_restriction);
+  if (ec.first_time_buyer_required) ecNotes.push('First-time buyer');
+  if (ec.additional_notes) ecNotes.push(ec.additional_notes);
+
+  const cats = Array.isArray(g.repair_categories) ? g.repair_categories : [];
+  const firstCat = cats[0] || 'default';
+
+  return `
+  <div class="grant-card" data-cats="${cats.join(' ')}">
+    <div class="card-header">
+      ${scoreHtml}
+      <div class="card-title">${escHtml(g.grant_name)}</div>
+      <div class="card-meta">
+        ${statusBadge(g.status)}
+        ${g.source ? `<span style="color:#94a3b8;font-size:.75rem">${escHtml(g.source)}</span>` : ''}
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="detail-row">
+        <span class="detail-label">Funding</span>
+        <span class="detail-value">${fmtCurrency(g.amount_min)} – ${fmtCurrency(g.amount_max)}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Deadline</span>
+        <span class="detail-value">${countdownHtml(g.deadline)}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Income Limit</span>
+        <span class="detail-value">${fmtCurrency(g.income_limit)}/yr</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Age Req.</span>
+        <span class="detail-value">${g.age_min != null ? g.age_min + '+' : 'None'}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Property</span>
+        <span class="detail-value">${fmtList(g.property_types)}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Repairs</span>
+        <span class="detail-value">${fmtList(g.repair_categories)}</span>
+      </div>
+      ${ecNotes.length ? `<div class="detail-row"><span class="detail-label">Notes</span><span class="detail-value" style="font-size:.82rem;color:var(--muted)">${escHtml(ecNotes.join(' · '))}</span></div>` : ''}
+      ${g.description ? `<div class="description">${escHtml(g.description)}</div>` : ''}
+    </div>
+    <div class="card-footer">
+      ${g.application_url
+        ? `<a href="${escAttr(g.application_url)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Apply Now ↗</a>`
+        : '<span style="font-size:.8rem;color:var(--muted)">Contact agency to apply</span>'}
+      <button class="btn btn-outline btn-sm" onclick='showChecklist(${JSON.stringify(g).replace(/'/g,"&#39;")})'>📋 Checklist</button>
+      ${g.agency_phone ? `<a href="tel:${escAttr(g.agency_phone)}" style="font-size:.8rem;color:var(--teal);text-decoration:none">📞 ${escHtml(g.agency_phone)}</a>` : ''}
+    </div>
+  </div>`;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function escAttr(s) { return escHtml(s); }
+
+// ── Show checklist modal ───────────────────────────────────────────────────
+function showChecklist(grant) {
+  const cats = Array.isArray(grant.repair_categories) ? grant.repair_categories : [];
+  const firstCat = cats[0] || 'default';
+  const items = [];
+  const seen = new Set();
+  for (const cat of cats) {
+    for (const item of (CHECKLISTS[cat] || CHECKLISTS.default)) {
+      if (!seen.has(item)) { items.push(item); seen.add(item); }
+    }
+  }
+  if (!items.length) items.push(...CHECKLISTS.default);
+
+  document.getElementById('modal-title').textContent = `Checklist – ${grant.grant_name}`;
+  document.getElementById('modal-body').innerHTML = items.map((item, i) => `
+    <div class="checklist-item">
+      <input type="checkbox" id="cl-${i}">
+      <label for="cl-${i}">${escHtml(item)}</label>
+    </div>`).join('');
+
+  document.getElementById('checklist-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('checklist-modal').classList.remove('open');
+}
+document.getElementById('checklist-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ── Filter pills ──────────────────────────────────────────────────────────
+document.querySelectorAll('.filter-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cat = btn.dataset.cat;
+    document.querySelectorAll('.grant-card').forEach(card => {
+      if (cat === 'all' || card.dataset.cats.includes(cat)) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+});
+
+// ── Load header stats ──────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res = await fetch(`${API_BASE}/api/v2/grants/`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const open = data.filter(g => g.status === 'open').length;
+    const soon = data.filter(g => g.status === 'closing_soon').length;
+    document.getElementById('header-stats').textContent =
+      `${data.length} grants · ${open} open · ${soon} closing soon`;
+  } catch {
+    document.getElementById('header-stats').textContent = 'API offline — run backend first';
+  }
+}
+
+// ── Main quiz submit ──────────────────────────────────────────────────────
+document.getElementById('quiz-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const age = fd.get('age');
+  const income = fd.get('income');
+  const property_type = fd.get('property_type');
+  const repair_category = fd.get('repair_category');
+  const include_closed = document.getElementById('include-closed').checked;
+
+  if (!property_type || !repair_category) {
+    toast('Please select a property type and repair category.', 'error'); return;
+  }
+
+  const btn = document.getElementById('btn-match');
+  document.getElementById('btn-match-text').style.display = 'none';
+  document.getElementById('btn-match-spinner').style.display = 'inline';
+  btn.disabled = true;
+
+  lastQuery = { age, income, property_type, repair_category, include_closed };
+
+  const params = new URLSearchParams({ age, income, property_type, repair_category, include_closed });
+  try {
+    const res = await fetch(`${API_BASE}/api/v2/grants/match?${params}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    lastResults = data.results || [];
+    renderResults(lastResults);
+    toast(`Found ${lastResults.length} matching grant${lastResults.length !== 1 ? 's' : ''}.`, 'success');
+  } catch (err) {
+    toast(`Error: ${err.message}`, 'error');
+    document.getElementById('initial-state').innerHTML = `
+      <div class="icon">⚠️</div>
+      <h3>Could not reach the API</h3>
+      <p>Make sure the backend is running at <strong>${API_BASE}</strong> and try again.</p>`;
+  } finally {
+    document.getElementById('btn-match-text').style.display = 'inline';
+    document.getElementById('btn-match-spinner').style.display = 'none';
+    btn.disabled = false;
+  }
+});
+
+function renderResults(results) {
+  const container = document.getElementById('cards-container');
+  const count = document.getElementById('results-count');
+  const initial = document.getElementById('initial-state');
+  const resultsSection = document.getElementById('results-section');
+  const filterSection = document.getElementById('filter-section');
+
+  initial.style.display = 'none';
+  resultsSection.style.display = 'block';
+  filterSection.style.display = 'block';
+
+  // Reset filter pills
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-cat="all"]').classList.add('active');
+
+  if (!results.length) {
+    container.innerHTML = `
+      <div style="grid-column:1/-1">
+        <div class="state-box">
+          <div class="icon">🔎</div>
+          <h3>No grants matched</h3>
+          <p>Try adjusting your income, age, or repair category, or enable "Include closed grants".</p>
+        </div>
+      </div>`;
+    count.textContent = '0 grants matched';
+    document.getElementById('btn-csv').disabled = true;
+    document.getElementById('btn-pdf').disabled = true;
+    return;
+  }
+
+  container.innerHTML = results.map(renderCard).join('');
+  count.textContent = `${results.length} grant${results.length !== 1 ? 's' : ''} matched`;
+  document.getElementById('btn-csv').disabled = false;
+  document.getElementById('btn-pdf').disabled = false;
+}
+
+// ── Clear ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-clear').addEventListener('click', () => {
+  document.getElementById('quiz-form').reset();
+  lastResults = [];
+  lastQuery = {};
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('filter-section').style.display = 'none';
+  document.getElementById('initial-state').style.display = 'block';
+  document.getElementById('initial-state').innerHTML = `
+    <div class="icon">🏡</div>
+    <h3>Discover Housing Grants</h3>
+    <p>Fill in the eligibility quiz above to see grants ranked by how well you match.</p>`;
+});
+
+// ── Exports ────────────────────────────────────────────────────────────────
+function buildExportUrl(fmt) {
+  const { age, income, property_type, repair_category, include_closed } = lastQuery;
+  const params = new URLSearchParams({ age, income, property_type, repair_category, include_closed });
+  return `${API_BASE}/api/v2/grants/export/${fmt}?${params}`;
+}
+
+document.getElementById('btn-csv').addEventListener('click', () => {
+  if (!lastResults.length) return;
+  window.location.href = buildExportUrl('csv');
+  toast('Downloading CSV…', 'info');
+});
+
+document.getElementById('btn-pdf').addEventListener('click', () => {
+  if (!lastResults.length) return;
+  window.location.href = buildExportUrl('pdf');
+  toast('Generating PDF report…', 'info');
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+loadStats();
+</script>
+</body>
+</html>
