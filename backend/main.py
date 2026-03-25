@@ -21,6 +21,13 @@ Base.metadata.create_all(bind=engine)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for application startup and shutdown."""
+    # Seed grants data if not already seeded
+    try:
+        from .scripts.seed_grants_data import run_seed
+        run_seed()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Seed skipped: %s", e)
     start_scheduler()
     yield
     shutdown_scheduler()
