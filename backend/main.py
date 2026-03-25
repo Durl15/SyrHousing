@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
+import logging
+
+_log = logging.getLogger(__name__)
 
 from .config import settings
 from .database import engine, Base
@@ -11,7 +13,14 @@ from .api import (
     chatbot, auth, ai, applications, admin, export,
     notifications, grant_writer, discovery,
 )
-from .api.grants_v2 import router as grants_v2_router
+
+try:
+    from .api.grants_v2 import router as grants_v2_router
+    _log.info("grants_v2 router imported successfully")
+except Exception as _exc:
+    _log.error("FAILED to import grants_v2 router: %s", _exc, exc_info=True)
+    grants_v2_router = None
+
 from .scheduler import start_scheduler, shutdown_scheduler
 
 # Create all tables on startup (idempotent — safe to run on every start)
@@ -66,7 +75,11 @@ app.include_router(grant_writer.router)
 app.include_router(discovery.router)
 
 # ── Grants V2 router (new eligibility-matched grant system) ──────────────────
-app.include_router(grants_v2_router)
+if grants_v2_router is not None:
+    app.include_router(grants_v2_router)
+    _log.info("grants_v2 router registered at /api/v2/grants")
+else:
+    _log.error("grants_v2 router NOT registered — import failed")
 
 # ── Serve grants dashboard HTML as a static file ─────────────────────────────
 _dashboard_path = os.path.join(
