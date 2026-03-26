@@ -405,7 +405,40 @@ def email_results(payload: EmailResultsSchema, db: Session = Depends(get_db)):
         score_color = "#16a34a" if score and score >= 75 else ("#d97706" if score and score >= 40 else "#dc2626")
         status_colors = {"open": "#16a34a", "closing_soon": "#d97706", "closed": "#dc2626"}
         s_color = status_colors.get(g.get("status", "open"), "#6b7280")
-        cats = g.get("repair_categories") or []
+
+        # Pre-compute conditional snippets (no backslashes inside f-string expressions)
+        phone = g.get("agency_phone") or ""
+        email_addr = g.get("agency_email") or ""
+        app_url = g.get("application_url") or ""
+        desc = g.get("description") or ""
+
+        score_div = (
+            f'<div style="background:{score_color};color:#fff;border-radius:50%;'
+            f'width:40px;height:40px;display:flex;align-items:center;justify-content:center;'
+            f'font-weight:800;font-size:13px;flex-shrink:0">{score}%</div>'
+        ) if score is not None else ""
+
+        phone_row = (
+            f'<tr><td style="color:#64748b;padding:3px 0">Phone</td>'
+            f'<td><a href="tel:{phone}" style="color:#0d9488">{phone}</a></td></tr>'
+        ) if phone else ""
+
+        email_row = (
+            f'<tr><td style="color:#64748b;padding:3px 0">Email</td>'
+            f'<td><a href="mailto:{email_addr}" style="color:#0d9488">{email_addr}</a></td></tr>'
+        ) if email_addr else ""
+
+        desc_snip = desc[:200] + ("…" if len(desc) > 200 else "")
+        desc_html = (
+            f'<p style="color:#64748b;font-size:12px;margin:8px 0 0 0;line-height:1.5">{desc_snip}</p>'
+        ) if desc else ""
+
+        url_html = (
+            f'<div style="margin-top:10px">'
+            f'<a href="{app_url}" style="background:#0d9488;color:#fff;padding:7px 16px;'
+            f'border-radius:6px;text-decoration:none;font-size:13px;font-weight:600">Apply Now →</a></div>'
+        ) if app_url else ""
+
         rows_html += f"""
         <div style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;overflow:hidden">
           <div style="background:#1a2744;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start">
@@ -413,7 +446,7 @@ def email_results(payload: EmailResultsSchema, db: Session = Depends(get_db)):
               <div style="color:#fff;font-weight:700;font-size:15px">{g.get('grant_name','')}</div>
               <div style="color:#94a3b8;font-size:12px;margin-top:2px">{g.get('source','')}</div>
             </div>
-            {f'<div style="background:{score_color};color:#fff;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">{score}%</div>' if score is not None else ''}
+            {score_div}
           </div>
           <div style="padding:12px 16px;background:#fff">
             <table style="width:100%;font-size:13px;border-collapse:collapse">
@@ -421,11 +454,11 @@ def email_results(payload: EmailResultsSchema, db: Session = Depends(get_db)):
               <tr><td style="color:#64748b;padding:3px 0">Funding</td><td>{fmt(g.get('amount_min'))} – {fmt(g.get('amount_max'))}</td></tr>
               <tr><td style="color:#64748b;padding:3px 0">Deadline</td><td>{g.get('deadline') or 'Rolling'}</td></tr>
               <tr><td style="color:#64748b;padding:3px 0">Income Limit</td><td>{fmt(g.get('income_limit'))}/yr</td></tr>
-              {f'<tr><td style="color:#64748b;padding:3px 0">Phone</td><td><a href="tel:{g.get(\"agency_phone\")}" style="color:#0d9488">{g.get("agency_phone")}</a></td></tr>' if g.get('agency_phone') else ''}
-              {f'<tr><td style="color:#64748b;padding:3px 0">Email</td><td><a href="mailto:{g.get(\"agency_email\")}" style="color:#0d9488">{g.get("agency_email")}</a></td></tr>' if g.get('agency_email') else ''}
+              {phone_row}
+              {email_row}
             </table>
-            {f'<p style="color:#64748b;font-size:12px;margin:8px 0 0 0;line-height:1.5">{g.get("description","")[:200]}{"…" if len(g.get("description","")) > 200 else ""}</p>' if g.get('description') else ''}
-            {f'<div style="margin-top:10px"><a href="{g.get(\"application_url\")}" style="background:#0d9488;color:#fff;padding:7px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600">Apply Now →</a></div>' if g.get('application_url') else ''}
+            {desc_html}
+            {url_html}
           </div>
         </div>"""
 
