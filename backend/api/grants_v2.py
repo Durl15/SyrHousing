@@ -17,7 +17,6 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.grants_db import Grant, EligibilityCriteria, GrantApplication
-from ..services.email import send_email, is_email_available, _base_template
 from ..services.eligibility_engine import (
     match_grants,
     VALID_PROPERTY_TYPES,
@@ -375,6 +374,7 @@ def create_application(payload: ApplicationCreateSchema, db: Session = Depends(g
 
 @router.post("/email-results", status_code=200, summary="Email matched grants to the user")
 def email_results(payload: EmailResultsSchema, db: Session = Depends(get_db)):
+    from ..services.email import send_email, is_email_available, _base_template
     if not is_email_available():
         raise HTTPException(status_code=503, detail="Email service not configured — add SENDGRID_API_KEY to Railway variables.")
 
@@ -484,6 +484,7 @@ def submit_intake(payload: IntakeFormSchema, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Failed to save intake form")
 
     # ── Send emails (non-fatal — submission already saved) ────────────────
+    from ..services.email import send_email, is_email_available, _base_template
     if is_email_available():
         # 1. Confirmation to applicant
         applicant_html = _base_template(f"""
