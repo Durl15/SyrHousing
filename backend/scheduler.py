@@ -90,6 +90,95 @@ def refresh_grant_statuses():
         db.close()
 
 
+def send_deadline_alerts():
+    """Daily job: email applicants 30, 7, and 1 day(s) before a grant deadline."""
+    import json
+    from datetime import date as date_cls
+    from .services.email import send_email, is_email_available, _base_template
+
+    if not is_email_available():
+        logger.info("Email not configured — skipping deadline alerts")
+        return
+
+    logger.info("Running daily deadline alert job...")
+    db = SessionLocal()
+    try:
+        from .models.grants_db import GrantApplication
+        today = date_cls.today()
+        thresholds = [30, 7, 1]
+        sent_count = 0
+
+        apps = db.query(GrantApplication).filter(
+            GrantApplication.applicant_email.isnot(None)
+        ).all()
+
+        for app in apps:
+            grant = app.grant
+            if not grant or not grant.deadline or grant.deadline in ("rolling", "annual"):
+                continue
+            if grant.status == "closed":
+                continue
+            try:
+                dl = date_cls.fromisoformat(grant.deadline)
+            except (ValueError, TypeError):
+                continue
+
+            days_left = (dl - today).days
+            if days_left < 0:
+                continue
+
+            try:
+                already_sent = json.loads(app.deadline_alerts_sent or "[]")
+            except (ValueError, TypeError):
+                already_sent = []
+
+            for threshold in thresholds:
+                if days_left <= threshold and threshold not in already_sent:
+                    urgency = "TODAY" if days_left == 0 else f"{days_left} day{'s' if days_left != 1 else ''}"
+                    color = "#dc2626" if days_left <= 7 else "#d97706"
+                    subject = f"⏰ {grant.grant_name} closes in {urgency} — SyrHousing"
+                    html = _base_template(f"""
+                        <h2 style="color:#1a2744;margin-top:0">Grant Deadline Reminder</h2>
+                        <p>Hi {app.applicant_name or 'there'},</p>
+                        <p>You expressed interest in <strong>{grant.grant_name}</strong>.
+                        The application deadline is coming up soon:</p>
+                        <div style="text-align:center;margin:20px 0">
+                            <div style="display:inline-block;background:{color};color:#fff;
+                                padding:12px 28px;border-radius:8px;font-size:20px;font-weight:800">
+                                {urgency} left
+                            </div>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;font-size:14px;margin:16px 0">
+                            <tr style="background:#f8fafc">
+                                <td style="padding:8px 12px;font-weight:bold;width:140px">Deadline</td>
+                                <td style="padding:8px 12px">{grant.deadline}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px 12px;font-weight:bold">Funding</td>
+                                <td style="padding:8px 12px">${grant.amount_min:,.0f} – {'${:,.0f}'.format(grant.amount_max) if grant.amount_max else 'varies'}</td>
+                            </tr>
+                            {'<tr style="background:#f8fafc"><td style="padding:8px 12px;font-weight:bold">Phone</td><td style="padding:8px 12px">' + grant.agency_phone + '</td></tr>' if grant.agency_phone else ''}
+                            {'<tr><td style="padding:8px 12px;font-weight:bold">Email</td><td style="padding:8px 12px">' + grant.agency_email + '</td></tr>' if grant.agency_email else ''}
+                        </table>
+                        {('<div style="text-align:center;margin:20px 0"><a href="' + grant.application_url + '" style="background:#0d9488;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px">Apply Now →</a></div>') if grant.application_url else ''}
+                        <p style="color:#6b7280;font-size:13px">
+                            Need help? Call <strong>211</strong> or contact the agency directly.
+                        </p>
+                    """)
+                    if send_email(app.applicant_email, subject, html):
+                        already_sent.append(threshold)
+                        app.deadline_alerts_sent = json.dumps(already_sent)
+                        sent_count += 1
+
+        db.commit()
+        logger.info("Deadline alerts complete: %d sent", sent_count)
+    except Exception:
+        logger.exception("Deadline alert job failed")
+        db.rollback()
+    finally:
+        db.close()
+
+
 def job_listener(event):
     """
     Listen to job execution events for logging and monitoring.
@@ -138,6 +227,16 @@ def start_scheduler():
             name="Automated Grant Discovery",
             replace_existing=True,
             misfire_grace_time=3600,  # Allow 1 hour grace for missed runs
+        )
+
+        # Daily deadline alerts — every day at 8 AM
+        scheduler.add_job(
+            func=send_deadline_alerts,
+            trigger=CronTrigger(hour=8, minute=0),
+            id="daily_deadline_alerts",
+            name="Daily Deadline Alerts",
+            replace_existing=True,
+            misfire_grace_time=3600,
         )
 
         # Weekly grant status refresh — every Monday at 3 AM

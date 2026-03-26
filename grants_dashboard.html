@@ -585,9 +585,9 @@
 
     <!-- Step 1: About you -->
     <div class="wizard-pane active" id="pane-1">
-      <h3>About You</h3>
-      <p class="step-hint">Your age helps us find programs with age requirements — many grants are specifically for seniors 60+.</p>
-      <div class="form-grid" style="max-width:420px">
+      <h3>About You & Your Home</h3>
+      <p class="step-hint">Your age and address help us find programs you qualify for — many grants are specifically for seniors 60+ in Onondaga County.</p>
+      <div class="form-grid" style="max-width:560px">
         <div class="form-group">
           <label for="f-age">Your Age *</label>
           <input type="number" id="f-age" min="18" max="120" placeholder="e.g. 68">
@@ -601,6 +601,14 @@
             <option value="4">4 people</option>
             <option value="5">5 or more</option>
           </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label for="f-street">Street Address <span style="font-weight:400;color:var(--muted)">(optional — verifies Onondaga County eligibility)</span></label>
+          <div style="display:flex;gap:.5rem">
+            <input type="text" id="f-street" placeholder="e.g. 123 Main St, Syracuse NY" style="flex:1">
+            <button type="button" class="btn btn-outline btn-sm" onclick="verifyAddress()" id="btn-verify-addr" style="white-space:nowrap">Verify</button>
+          </div>
+          <div id="addr-result" style="margin-top:.5rem;font-size:.82rem;display:none"></div>
         </div>
       </div>
       <div class="wizard-nav">
@@ -1227,6 +1235,8 @@ function wizardReset() {
   document.getElementById('f-proptype').value = '';
   document.getElementById('f-repair').value = '';
   document.getElementById('f-household').value = '1';
+  document.getElementById('f-street').value = '';
+  document.getElementById('addr-result').style.display = 'none';
   document.getElementById('include-closed').checked = false;
   document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
   lastResults = [];
@@ -1293,6 +1303,7 @@ function saveProfile() {
     age: document.getElementById('f-age').value,
     income: document.getElementById('f-income').value,
     household: document.getElementById('f-household').value,
+    street: document.getElementById('f-street').value,
     proptype: wizardSelections.proptype,
     repair: wizardSelections.repair,
     include_closed: document.getElementById('include-closed').checked,
@@ -1308,6 +1319,7 @@ function restoreProfile() {
     if (p.age)      document.getElementById('f-age').value = p.age;
     if (p.income)   document.getElementById('f-income').value = p.income;
     if (p.household) document.getElementById('f-household').value = p.household;
+    if (p.street)   document.getElementById('f-street').value = p.street;
     if (p.include_closed) document.getElementById('include-closed').checked = p.include_closed;
     if (p.proptype) {
       wizardSelections.proptype = p.proptype;
@@ -1474,6 +1486,52 @@ async function submitIntake() {
     btn.disabled = false;
     document.getElementById('intake-btn-text').style.display = 'inline';
     document.getElementById('intake-btn-spinner').style.display = 'none';
+  }
+}
+
+
+// ── Address verification ──────────────────────────────────────────────────
+async function verifyAddress() {
+  const street = document.getElementById('f-street').value.trim();
+  if (!street) { toast('Enter a street address first.', 'error'); return; }
+
+  const btn = document.getElementById('btn-verify-addr');
+  const resultDiv = document.getElementById('addr-result');
+  btn.disabled = true;
+  btn.textContent = '…';
+  resultDiv.style.display = 'none';
+
+  // Parse "123 Main St, Syracuse NY 13210" — split off city/zip if included
+  const parts = street.split(',');
+  const streetPart = parts[0].trim();
+  const rest = parts.slice(1).join(',').trim();
+  const zipMatch = rest.match(/\b(\d{5})\b/);
+  const zipcode = zipMatch ? zipMatch[1] : '';
+
+  try {
+    const params = new URLSearchParams({ street: streetPart, city: 'Syracuse', state: 'NY' });
+    if (zipcode) params.append('zipcode', zipcode);
+    const res = await fetch(`${API_BASE}/api/v2/address/verify?${params}`);
+    const data = await res.json();
+
+    resultDiv.style.display = 'block';
+    if (!data.found) {
+      resultDiv.innerHTML = `<span style="color:var(--soon)">⚠ ${data.message}</span>`;
+    } else if (data.in_service_area) {
+      resultDiv.innerHTML = `<span style="color:var(--open)">✓ ${data.message}</span>`;
+      if (data.formatted_address) {
+        document.getElementById('f-street').value = data.formatted_address;
+        saveProfile();
+      }
+    } else {
+      resultDiv.innerHTML = `<span style="color:var(--soon)">⚠ ${data.message}</span>`;
+    }
+  } catch (err) {
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<span style="color:var(--muted)">Address lookup unavailable — you can still continue.</span>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify';
   }
 }
 

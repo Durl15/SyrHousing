@@ -136,6 +136,7 @@ class GrantApplication(Base):
     status = Column(String(50), nullable=False, default="draft")
     notes = Column(Text, nullable=True)
     documents_checklist = Column(Text, nullable=True)  # JSON array
+    deadline_alerts_sent = Column(Text, nullable=True)  # JSON array of thresholds e.g. "[30,7]"
     submitted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

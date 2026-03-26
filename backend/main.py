@@ -13,6 +13,7 @@ from .api import (
     chatbot, auth, ai, applications, admin, export,
     notifications, grant_writer, discovery,
 )
+from .api.address import router as address_router
 
 try:
     from .api.grants_v2 import router as grants_v2_router
@@ -73,6 +74,7 @@ app.include_router(export.router)
 app.include_router(notifications.router)
 app.include_router(grant_writer.router)
 app.include_router(discovery.router)
+app.include_router(address_router)
 
 # ── Grants V2 router (new eligibility-matched grant system) ──────────────────
 if grants_v2_router is not None:
