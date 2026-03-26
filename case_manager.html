@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SyrHousing – Case Manager</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #1a2744;
+    --navy-mid:  #243258;
+    --teal:      #0d9488;
+    --teal-light:#14b8a6;
+    --teal-pale: #ccfbf1;
+    --bg:        #f0f4f8;
+    --card-bg:   #ffffff;
+    --text:      #1e293b;
+    --muted:     #64748b;
+    --border:    #e2e8f0;
+    --open:      #16a34a;
+    --soon:      #d97706;
+    --closed:    #dc2626;
+    --shadow:    0 2px 8px rgba(0,0,0,.10);
+    --radius:    10px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  }
+  .logo { display: flex; align-items: center; gap: .75rem; font-size: 1.1rem; font-weight: 700; }
+  .logo-icon { width: 36px; height: 36px; background: var(--teal); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  .badge-cm { background: var(--teal); color: #fff; font-size: .7rem; font-weight: 700;
+    padding: .2rem .65rem; border-radius: 999px; letter-spacing: .05em; text-transform: uppercase; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    border-top: 4px solid var(--teal);
+  }
+  .card h2 { color: var(--navy); font-size: 1.15rem; margin-bottom: .25rem; }
+  .card p.hint { color: var(--muted); font-size: .875rem; margin-bottom: 1.5rem; }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+  .form-group { display: flex; flex-direction: column; gap: .35rem; }
+  .form-group label {
+    font-size: .78rem; font-weight: 700; color: var(--navy);
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .form-group input, .form-group select {
+    padding: .6rem .85rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-size: .95rem;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color .2s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none; border-color: var(--teal); background: #fff;
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: .45rem;
+    padding: .65rem 1.4rem; border: none; border-radius: 7px;
+    font-size: .9rem; font-weight: 600; cursor: pointer;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { opacity: .88; }
+  .btn-secondary { background: var(--navy); color: #fff; }
+  .btn-secondary:hover { opacity: .88; }
+  .btn-outline { background: transparent; border: 1.5px solid var(--teal); color: var(--teal); }
+  .btn-outline:hover { background: var(--teal-pale); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-sm { padding: .38rem .9rem; font-size: .8rem; border-radius: 6px; }
+
+  .spinner { display: inline-block; width: 18px; height: 18px;
+    border: 3px solid rgba(255,255,255,.4); border-top-color: #fff;
+    border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Results */
+  .results-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.25rem; flex-wrap: wrap; gap: .75rem;
+  }
+  .results-header h3 { color: var(--navy); font-size: 1.05rem; }
+  .export-group { display: flex; gap: .6rem; flex-wrap: wrap; }
+
+  .grant-card {
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1rem;
+    border: 1.5px solid var(--border);
+  }
+  .card-header { background: var(--navy); padding: .9rem 1.25rem .75rem; position: relative; }
+  .card-title { color: #fff; font-size: .95rem; font-weight: 700; line-height: 1.3;
+    margin-bottom: .45rem; padding-right: 3.5rem; }
+  .card-meta { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: .18rem .65rem; border-radius: 999px;
+    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .badge-open    { background: #dcfce7; color: var(--open); }
+  .badge-closing { background: #fef3c7; color: var(--soon); }
+  .badge-closed  { background: #fee2e2; color: var(--closed); }
+  .score-badge {
+    position: absolute; top: .9rem; right: 1.25rem;
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    font-size: .65rem; font-weight: 800; border: 2.5px solid rgba(255,255,255,.35);
+  }
+  .score-high { background: var(--open); color: #fff; }
+  .score-mid  { background: var(--soon); color: #fff; }
+  .score-low  { background: var(--closed); color: #fff; }
+
+  .card-body { padding: .85rem 1.25rem; }
+  .detail-row { display: flex; gap: .5rem; margin-bottom: .5rem; align-items: flex-start; font-size: .875rem; }
+  .detail-label { min-width: 90px; color: var(--muted); font-size: .78rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .03em; padding-top: .05rem; }
+  .detail-value { color: var(--text); line-height: 1.4; }
+
+  .contact-bar { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center;
+    padding: .55rem 1.25rem; background: #f8fafc; border-top: 1px solid var(--border); font-size: .82rem; }
+  .contact-link { display: inline-flex; align-items: center; gap: .3rem;
+    color: var(--teal); text-decoration: none; font-weight: 600; }
+  .contact-link:hover { text-decoration: underline; }
+
+  .card-footer { padding: .75rem 1.25rem; border-top: 1px solid var(--border);
+    display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+
+  /* Password screen */
+  #lock-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--navy);
+  }
+  .lock-box {
+    background: #fff; border-radius: 14px; padding: 2.5rem 2rem;
+    width: 100%; max-width: 360px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  }
+  .lock-box .lock-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .lock-box h2 { color: var(--navy); margin-bottom: .25rem; }
+  .lock-box p { color: var(--muted); font-size: .875rem; margin-bottom: 1.5rem; }
+  .lock-box input {
+    width: 100%; padding: .75rem 1rem; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 1rem; margin-bottom: 1rem; text-align: center;
+    letter-spacing: .1em;
+  }
+  .lock-box input:focus { outline: none; border-color: var(--teal); }
+  #lock-error { color: var(--closed); font-size: .85rem; margin-top: .5rem; display: none; }
+
+  /* Toast */
+  #toast-container {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300;
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .toast { padding: .85rem 1.2rem; border-radius: 8px; color: #fff; font-size: .875rem;
+    font-weight: 500; max-width: 320px; box-shadow: 0 4px 14px rgba(0,0,0,.2);
+    animation: slideIn .25s ease; }
+  .toast-success { background: var(--teal); }
+  .toast-error   { background: var(--closed); }
+  .toast-info    { background: #2e4075; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+  #app { display: none; }
+
+  .state-box { text-align: center; padding: 3rem 2rem; color: var(--muted); }
+  .state-box .icon { font-size: 2.5rem; margin-bottom: .75rem; }
+  .state-box h3 { font-size: 1rem; color: var(--navy); margin-bottom: .4rem; }
+
+  @media (max-width: 600px) {
+    main { padding: 1rem; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media print {
+    header, #cm-form-card, #lock-screen, #toast-container { display: none !important; }
+    body { background: #fff; }
+    .grant-card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+    .card-footer { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Lock screen -->
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="lock-icon">🔐</div>
+    <h2>Case Manager Login</h2>
+    <p>Enter the access password to continue.</p>
+    <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="btn btn-primary" style="width:100%" onclick="checkPw()">Unlock →</button>
+    <div id="lock-error">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🏠</div>
+      <div>SyrHousing <span style="color:#94a3b8;font-weight:400;font-size:.8rem">/ Case Manager</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <span class="badge-cm">Staff Only</span>
+      <button class="btn btn-outline btn-sm" onclick="lockApp()" style="color:#94a3b8;border-color:#94a3b8">Lock</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Client info form -->
+    <div class="card" id="cm-form-card">
+      <h2>Client Eligibility Search</h2>
+      <p class="hint">Enter the client's information to generate a personalized grant report.</p>
+
+      <div class="form-grid">
+        <div class="form-group" style="grid-column:1/-1">
+          <label for="cm-name">Client Name *</label>
+          <input type="text" id="cm-name" placeholder="Full name (appears on PDF report)">
+        </div>
+        <div class="form-group">
+          <label for="cm-age">Age *</label>
+          <input type="number" id="cm-age" min="18" max="120" placeholder="e.g. 72">
+        </div>
+        <div class="form-group">
+          <label for="cm-income">Annual Income ($) *</label>
+          <input type="number" id="cm-income" min="0" placeholder="e.g. 28000">
+        </div>
+        <div class="form-group">
+          <label for="cm-proptype">Property Type *</label>
+          <select id="cm-proptype">
+            <option value="">— select —</option>
+            <option value="single_family">Single Family</option>
+            <option value="multifamily">Multi-Family</option>
+            <option value="condo">Condo</option>
+            <option value="co_op">Co-Op</option>
+            <option value="townhouse">Townhouse</option>
+            <option value="mobile_home">Mobile Home</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="cm-repair">Primary Repair Need *</label>
+          <select id="cm-repair">
+            <option value="">— select —</option>
+            <option value="emergency_repairs">Emergency Repairs</option>
+            <option value="energy_efficiency">Energy Efficiency</option>
+            <option value="accessibility">Accessibility / ADA</option>
+            <option value="structural">Structural / Code</option>
+            <option value="historic_preservation">Historic Preservation</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" id="cm-btn-search" onclick="cmSearch()">
+          <span id="cm-btn-text">🔍 Search Grants</span>
+          <span id="cm-btn-spinner" style="display:none"><span class="spinner"></span></span>
+        </button>
+        <button class="btn btn-outline" onclick="cmClear()">Clear</button>
+        <label style="font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+          <input type="checkbox" id="cm-include-closed" style="accent-color:var(--teal)">
+          Include closed programs
+        </label>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="cm-results" style="display:none">
+      <div class="results-header">
+        <h3 id="cm-count">0 grants matched</h3>
+        <div class="export-group">
+          <button class="btn btn-secondary btn-sm" id="cm-btn-pdf" onclick="cmDownloadPdf()">📄 Download PDF Report</button>
+          <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+      <div id="cm-cards"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="cm-initial" class="state-box">
+      <div class="icon">📋</div>
+      <h3>No search yet</h3>
+      <p>Enter client info above and click Search Grants.</p>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const API_BASE = 'https://syrhousing-backend-production.up.railway.app';
+
+// ── Password ──────────────────────────────────────────────────────────────
+// Change this to your desired case manager password
+const CM_PASSWORD = 'housing2026';
+
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if (val === CM_PASSWORD) {
+    sessionStorage.setItem('cm_auth', '1');
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('lock-error').style.display = 'none';
+  } else {
+    document.getElementById('lock-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+function lockApp() {
+  sessionStorage.removeItem('cm_auth');
+  document.getElementById('lock-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pw-input').value = '';
+}
+
+// Auto-unlock if session still active
+if (sessionStorage.getItem('cm_auth') === '1') {
+  document.getElementById('lock-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+let cmResults = [];
+let cmQuery = {};
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtCurrency(v) { return v != null ? '$' + Number(v).toLocaleString() : 'N/A'; }
+function fmtList(arr) {
+  if (!arr || !arr.length) return 'Any';
+  return arr.map(s => s.replace(/_/g,' ')).map(s => s[0].toUpperCase()+s.slice(1)).join(', ');
+}
+function statusBadge(s) {
+  if (s === 'open') return '<span class="badge badge-open">Open</span>';
+  if (s === 'closing_soon') return '<span class="badge badge-closing">⚠ Closing Soon</span>';
+  return '<span class="badge badge-closed">Closed</span>';
+}
+function scoreClass(n) { return n >= 75 ? 'score-high' : n >= 40 ? 'score-mid' : 'score-low'; }
+
+// ── Search ────────────────────────────────────────────────────────────────
+async function cmSearch() {
+  const name = document.getElementById('cm-name').value.trim();
+  const age = document.getElementById('cm-age').value;
+  const income = document.getElementById('cm-income').value;
+  const property_type = document.getElementById('cm-proptype').value;
+  const repair_category = document.getElementById('cm-repair').value;
+  const include_closed = document.getElementById('cm-include-closed').checked;
+
+  if (!name) { toast('Enter client name first.', 'error'); return; }
+  if (!age || !income) { toast('Age and income are required.', 'error'); return; }
+  if (!property_type || !repair_category) { toast('Select property type and repair need.', 'error'); return; }
+
+  const btn = document.getElementById('cm-btn-search');
+  btn.disabled = true;
+  document.getElementById('cm-btn-text').style.display = 'none';
+  document.getElementById('cm-btn-spinner').style.display = 'inline';
+
+  cmQuery = { name, age, income, property_type, repair_category, include_closed };
+
+  try {
+    const params = new URLSearchParams({ age, income, property_type, repair_category, include_closed });
+    const res = await fetch(`${API_BASE}/api/v2/grants/match?${params}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    cmResults = data.results || [];
+    renderCmResults(cmResults);
+    toast(`${cmResults.length} grant${cmResults.length !== 1 ? 's' : ''} found for ${name}.`, 'success');
+  } catch (err) {
+    toast(`Search failed: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('cm-btn-text').style.display = 'inline';
+    document.getElementById('cm-btn-spinner').style.display = 'none';
+  }
+}
+
+function renderCmResults(results) {
+  document.getElementById('cm-initial').style.display = 'none';
+  document.getElementById('cm-results').style.display = 'block';
+  document.getElementById('cm-count').textContent =
+    `${results.length} grant${results.length !== 1 ? 's' : ''} matched for ${cmQuery.name}`;
+
+  if (!results.length) {
+    document.getElementById('cm-cards').innerHTML = `
+      <div class="state-box">
+        <div class="icon">🔎</div>
+        <h3>No grants matched</h3>
+        <p>Try adjusting income, repair category, or enable "Include closed programs".</p>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('cm-cards').innerHTML = results.map(g => {
+    const score = g.match_score;
+    const scoreHtml = score != null
+      ? `<div class="score-badge ${scoreClass(score)}"><span style="font-size:.85rem">${score}</span><span>%</span></div>`
+      : '';
+    const cats = Array.isArray(g.repair_categories) ? g.repair_categories : [];
+    const hasContact = g.agency_phone || g.agency_email;
+    return `
+    <div class="grant-card">
+      <div class="card-header">
+        ${scoreHtml}
+        <div class="card-title">${esc(g.grant_name)}</div>
+        <div class="card-meta">
+          ${statusBadge(g.status)}
+          ${g.source ? `<span style="color:#94a3b8;font-size:.75rem">${esc(g.source)}</span>` : ''}
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><span class="detail-label">Funding</span><span class="detail-value">${fmtCurrency(g.amount_min)} – ${fmtCurrency(g.amount_max)}</span></div>
+        <div class="detail-row"><span class="detail-label">Deadline</span><span class="detail-value">${g.deadline || 'Rolling'}</span></div>
+        <div class="detail-row"><span class="detail-label">Income Limit</span><span class="detail-value">${fmtCurrency(g.income_limit)}/yr</span></div>
+        <div class="detail-row"><span class="detail-label">Age Req.</span><span class="detail-value">${g.age_min != null ? g.age_min + '+' : 'None'}</span></div>
+        <div class="detail-row"><span class="detail-label">Property</span><span class="detail-value">${fmtList(g.property_types)}</span></div>
+        <div class="detail-row"><span class="detail-label">Repairs</span><span class="detail-value">${fmtList(g.repair_categories)}</span></div>
+        ${g.description ? `<p style="font-size:.84rem;color:var(--muted);margin-top:.5rem;line-height:1.5">${esc(g.description)}</p>` : ''}
+      </div>
+      ${hasContact ? `
+      <div class="contact-bar">
+        ${g.agency_phone ? `<a class="contact-link" href="tel:${esc(g.agency_phone)}">📞 ${esc(g.agency_phone)}</a>` : ''}
+        ${g.agency_email ? `<a class="contact-link" href="mailto:${esc(g.agency_email)}">✉ ${esc(g.agency_email)}</a>` : ''}
+      </div>` : ''}
+      <div class="card-footer">
+        ${g.application_url
+          ? `<a href="${esc(g.application_url)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Apply Now ↗</a>`
+          : '<span style="font-size:.8rem;color:var(--muted)">Contact agency to apply</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function cmClear() {
+  cmResults = [];
+  cmQuery = {};
+  document.getElementById('cm-results').style.display = 'none';
+  document.getElementById('cm-initial').style.display = 'block';
+  document.getElementById('cm-name').value = '';
+  document.getElementById('cm-age').value = '';
+  document.getElementById('cm-income').value = '';
+  document.getElementById('cm-proptype').value = '';
+  document.getElementById('cm-repair').value = '';
+  document.getElementById('cm-include-closed').checked = false;
+}
+
+// ── PDF download with client name ─────────────────────────────────────────
+function cmDownloadPdf() {
+  if (!cmResults.length || !cmQuery.age) { toast('Run a search first.', 'error'); return; }
+  const params = new URLSearchParams({
+    age: cmQuery.age,
+    income: cmQuery.income,
+    property_type: cmQuery.property_type,
+    repair_category: cmQuery.repair_category,
+    include_closed: cmQuery.include_closed,
+    client_name: cmQuery.name,
+  });
+  window.location.href = `${API_BASE}/api/v2/grants/export/pdf?${params}`;
+  toast('Generating PDF report…', 'info');
+}
+</script>
+</body>
+</html>

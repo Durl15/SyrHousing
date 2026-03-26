@@ -136,7 +136,7 @@ def export_grants_csv(grants: list[dict]) -> io.StringIO:
     return output
 
 
-def export_grants_pdf(grants: list[dict]) -> io.BytesIO:
+def export_grants_pdf(grants: list[dict], client_name: Optional[str] = None) -> io.BytesIO:
     """
     Build a PDF report with one card per grant and a per-grant application
     checklist.  Returns a BytesIO buffer.
@@ -242,12 +242,11 @@ def export_grants_pdf(grants: list[dict]) -> io.BytesIO:
     # ── Cover page ────────────────────────────────────────────────────────────
     story.append(Spacer(1, 0.5 * inch))
     story.append(Paragraph("SyrHousing Grant Report", title_style))
-    story.append(
-        Paragraph(
-            f"Generated {datetime.now().strftime('%B %d, %Y')} · {len(grants)} grant(s) matched",
-            subtitle_style,
-        )
-    )
+    subtitle_parts = [f"Generated {datetime.now().strftime('%B %d, %Y')}"]
+    if client_name:
+        subtitle_parts.append(f"Prepared for: {client_name}")
+    subtitle_parts.append(f"{len(grants)} grant(s) matched")
+    story.append(Paragraph(" · ".join(subtitle_parts), subtitle_style))
     story.append(HRFlowable(width="100%", thickness=2, color=TEAL, spaceAfter=16))
 
     for idx, g in enumerate(grants):

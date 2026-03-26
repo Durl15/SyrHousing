@@ -714,6 +714,7 @@
       <div class="export-group">
         <button class="btn btn-secondary btn-sm" id="btn-csv" disabled>⬇ CSV</button>
         <button class="btn btn-secondary btn-sm" id="btn-pdf" disabled>📄 PDF</button>
+        <button class="btn btn-secondary btn-sm" id="btn-email" disabled onclick="openEmailModal()">📧 Email</button>
         <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print</button>
       </div>
     </div>
@@ -737,6 +738,32 @@
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ── Email Results Modal ──────────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="email-modal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h3>📧 Email My Results</h3>
+      <button class="modal-close" onclick="closeEmailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.875rem;color:var(--muted);margin-bottom:1.25rem">
+        We'll send your matched grant list — with funding amounts, deadlines, and contact info — straight to your inbox.
+      </p>
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <label for="email-to">Your Email Address</label>
+        <input type="email" id="email-to" placeholder="you@example.com">
+      </div>
+      <div style="display:flex;gap:.75rem;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeEmailModal()">Cancel</button>
+        <button class="btn btn-primary" id="btn-email-send" onclick="sendEmailResults()">
+          <span id="email-btn-text">Send Results</span>
+          <span id="email-btn-spinner" style="display:none"><span class="spinner"></span></span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1116,6 +1143,7 @@ function renderResults(results) {
     count.textContent = '0 grants matched';
     document.getElementById('btn-csv').disabled = true;
     document.getElementById('btn-pdf').disabled = true;
+    document.getElementById('btn-email').disabled = true;
     return;
   }
 
@@ -1123,6 +1151,7 @@ function renderResults(results) {
   count.textContent = `${results.length} grant${results.length !== 1 ? 's' : ''} matched`;
   document.getElementById('btn-csv').disabled = false;
   document.getElementById('btn-pdf').disabled = false;
+  document.getElementById('btn-email').disabled = false;
 }
 
 
@@ -1445,6 +1474,58 @@ async function submitIntake() {
     btn.disabled = false;
     document.getElementById('intake-btn-text').style.display = 'inline';
     document.getElementById('intake-btn-spinner').style.display = 'none';
+  }
+}
+
+
+// ── Email results modal ───────────────────────────────────────────────────
+function openEmailModal() {
+  // Pre-fill from localStorage
+  try {
+    const p = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
+  } catch {}
+  document.getElementById('email-modal').classList.add('open');
+}
+function closeEmailModal() {
+  document.getElementById('email-modal').classList.remove('open');
+}
+document.getElementById('email-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeEmailModal();
+});
+
+async function sendEmailResults() {
+  const email = document.getElementById('email-to').value.trim();
+  if (!email) { toast('Please enter your email address.', 'error'); return; }
+  if (!lastQuery.age) { toast('Run a search first.', 'error'); return; }
+
+  const btn = document.getElementById('btn-email-send');
+  btn.disabled = true;
+  document.getElementById('email-btn-text').style.display = 'none';
+  document.getElementById('email-btn-spinner').style.display = 'inline';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/v2/grants/email-results`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        age: parseInt(lastQuery.age),
+        income: parseFloat(lastQuery.income),
+        property_type: lastQuery.property_type,
+        repair_category: lastQuery.repair_category,
+        include_closed: lastQuery.include_closed,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+    toast(`Results sent to ${email}!`, 'success');
+    closeEmailModal();
+  } catch (err) {
+    toast(`Failed: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('email-btn-text').style.display = 'inline';
+    document.getElementById('email-btn-spinner').style.display = 'none';
   }
 }
 

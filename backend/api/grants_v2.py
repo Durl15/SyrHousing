@@ -80,6 +80,15 @@ class ApplicationCreateSchema(BaseModel):
     notes: Optional[str] = None
 
 
+class EmailResultsSchema(BaseModel):
+    email: str = Field(..., min_length=5, max_length=200)
+    age: int = Field(..., ge=0, le=120)
+    income: float = Field(..., ge=0)
+    property_type: str
+    repair_category: str
+    include_closed: bool = False
+
+
 class IntakeFormSchema(BaseModel):
     grant_id: str
     grant_name: str = ""
@@ -202,6 +211,7 @@ def export_pdf(
     repair_category: str = Query(...),
     repair_filter: Optional[str] = Query(None),
     include_closed: bool = Query(False),
+    client_name: Optional[str] = Query(None, description="Client name to include in PDF header"),
     db: Session = Depends(get_db),
 ):
     grants = match_grants(
@@ -214,7 +224,7 @@ def export_pdf(
         include_closed=include_closed,
     )
     try:
-        buffer = export_grants_pdf(grants)
+        buffer = export_grants_pdf(grants, client_name=client_name)
     except ImportError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
     except Exception:
@@ -361,6 +371,83 @@ def create_application(payload: ApplicationCreateSchema, db: Session = Depends(g
         logger.exception("Failed to create application")
         raise HTTPException(status_code=500, detail="Failed to create application")
     return app.to_dict()
+
+
+@router.post("/email-results", status_code=200, summary="Email matched grants to the user")
+def email_results(payload: EmailResultsSchema, db: Session = Depends(get_db)):
+    if not is_email_available():
+        raise HTTPException(status_code=503, detail="Email service not configured — add SENDGRID_API_KEY to Railway variables.")
+
+    if payload.property_type not in VALID_PROPERTY_TYPES:
+        raise HTTPException(status_code=422, detail=f"property_type must be one of {sorted(VALID_PROPERTY_TYPES)}")
+    if payload.repair_category not in VALID_REPAIR_CATEGORIES:
+        raise HTTPException(status_code=422, detail=f"repair_category must be one of {sorted(VALID_REPAIR_CATEGORIES)}")
+
+    grants = match_grants(
+        db=db,
+        age=payload.age,
+        income=payload.income,
+        property_type=payload.property_type,
+        repair_category=payload.repair_category,
+        include_closed=payload.include_closed,
+    )
+
+    if not grants:
+        raise HTTPException(status_code=404, detail="No grants matched — nothing to email.")
+
+    # Build HTML email
+    def fmt(v, prefix="$"):
+        return f"{prefix}{v:,.0f}" if v is not None else "N/A"
+
+    rows_html = ""
+    for g in grants:
+        score = g.get("match_score")
+        score_color = "#16a34a" if score and score >= 75 else ("#d97706" if score and score >= 40 else "#dc2626")
+        status_colors = {"open": "#16a34a", "closing_soon": "#d97706", "closed": "#dc2626"}
+        s_color = status_colors.get(g.get("status", "open"), "#6b7280")
+        cats = g.get("repair_categories") or []
+        rows_html += f"""
+        <div style="border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;overflow:hidden">
+          <div style="background:#1a2744;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="color:#fff;font-weight:700;font-size:15px">{g.get('grant_name','')}</div>
+              <div style="color:#94a3b8;font-size:12px;margin-top:2px">{g.get('source','')}</div>
+            </div>
+            {f'<div style="background:{score_color};color:#fff;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">{score}%</div>' if score is not None else ''}
+          </div>
+          <div style="padding:12px 16px;background:#fff">
+            <table style="width:100%;font-size:13px;border-collapse:collapse">
+              <tr><td style="color:#64748b;padding:3px 0;width:120px">Status</td><td style="color:{s_color};font-weight:600">{g.get('status','').replace('_',' ').title()}</td></tr>
+              <tr><td style="color:#64748b;padding:3px 0">Funding</td><td>{fmt(g.get('amount_min'))} – {fmt(g.get('amount_max'))}</td></tr>
+              <tr><td style="color:#64748b;padding:3px 0">Deadline</td><td>{g.get('deadline') or 'Rolling'}</td></tr>
+              <tr><td style="color:#64748b;padding:3px 0">Income Limit</td><td>{fmt(g.get('income_limit'))}/yr</td></tr>
+              {f'<tr><td style="color:#64748b;padding:3px 0">Phone</td><td><a href="tel:{g.get(\"agency_phone\")}" style="color:#0d9488">{g.get("agency_phone")}</a></td></tr>' if g.get('agency_phone') else ''}
+              {f'<tr><td style="color:#64748b;padding:3px 0">Email</td><td><a href="mailto:{g.get(\"agency_email\")}" style="color:#0d9488">{g.get("agency_email")}</a></td></tr>' if g.get('agency_email') else ''}
+            </table>
+            {f'<p style="color:#64748b;font-size:12px;margin:8px 0 0 0;line-height:1.5">{g.get("description","")[:200]}{"…" if len(g.get("description","")) > 200 else ""}</p>' if g.get('description') else ''}
+            {f'<div style="margin-top:10px"><a href="{g.get(\"application_url\")}" style="background:#0d9488;color:#fff;padding:7px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600">Apply Now →</a></div>' if g.get('application_url') else ''}
+          </div>
+        </div>"""
+
+    repair_label = payload.repair_category.replace("_", " ").title()
+    prop_label = payload.property_type.replace("_", " ").title()
+    html = _base_template(f"""
+        <h2 style="color:#1a2744;margin-top:0">Your Matched Housing Grants</h2>
+        <p>Based on your profile (<strong>Age {payload.age}</strong> · <strong>Income {fmt(payload.income)}/yr</strong> ·
+        <strong>{prop_label}</strong> · <strong>{repair_label}</strong>),
+        we found <strong>{len(grants)} grant{'' if len(grants)==1 else 's'}</strong> you may qualify for:</p>
+        {rows_html}
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0">
+        <p style="color:#6b7280;font-size:13px">
+          Need help applying? Call <strong>211</strong> to speak with a local housing counselor,
+          or visit <a href="https://syrhousing-grants.netlify.app" style="color:#0d9488">syrhousing-grants.netlify.app</a>.
+        </p>
+    """)
+
+    sent = send_email(payload.email, f"Your {len(grants)} Matched Housing Grant{'s' if len(grants)!=1 else ''} — SyrHousing", html)
+    if not sent:
+        raise HTTPException(status_code=500, detail="Failed to send email — check SendGrid configuration.")
+    return {"status": "sent", "grants_count": len(grants), "to": payload.email}
 
 
 @router.post("/intake", status_code=201, summary="Submit an interest/intake form for a grant")
