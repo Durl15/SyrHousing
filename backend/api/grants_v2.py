@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.grants_db import Grant, EligibilityCriteria, GrantApplication
+from ..services.email import send_email, is_email_available, _base_template
 from ..services.eligibility_engine import (
     match_grants,
     VALID_PROPERTY_TYPES,
@@ -394,6 +395,50 @@ def submit_intake(payload: IntakeFormSchema, db: Session = Depends(get_db)):
         db.rollback()
         logger.exception("Failed to save intake form")
         raise HTTPException(status_code=500, detail="Failed to save intake form")
+
+    # ── Send emails (non-fatal — submission already saved) ────────────────
+    if is_email_available():
+        # 1. Confirmation to applicant
+        applicant_html = _base_template(f"""
+            <h2 style="color:#1a2744;margin-top:0">We received your interest!</h2>
+            <p>Hi {payload.full_name},</p>
+            <p>Thanks for expressing interest in <strong>{payload.grant_name or payload.grant_id}</strong>.
+            Your information has been recorded and will be forwarded to the program agency.</p>
+            <div style="background:#f0fdf4;border-left:4px solid #0d9488;padding:12px 16px;margin:16px 0;border-radius:0 4px 4px 0;">
+                <p style="margin:0;font-weight:bold;color:#0d9488">What happens next?</p>
+                <ul style="margin:8px 0;padding-left:20px;color:#374151;">
+                    <li>The agency will review your information</li>
+                    <li>Expect a call or email within 3–5 business days</li>
+                    <li>Gather any documents on the checklist while you wait</li>
+                </ul>
+            </div>
+            <p style="color:#6b7280;font-size:13px;">
+                Need help sooner? Call <strong>211</strong> to speak with a local housing counselor.
+            </p>
+        """)
+        send_email(payload.email, f"Interest Received — {payload.grant_name or 'Housing Grant'}", applicant_html)
+
+        # 2. Notify agency (if they have an email on file)
+        if grant and grant.agency_email:
+            repair_str = payload.repair_need.replace("_", " ").title() if payload.repair_need else "Not specified"
+            prop_str = payload.property_type.replace("_", " ").title() if payload.property_type else "Not specified"
+            agency_html = _base_template(f"""
+                <h2 style="color:#1a2744;margin-top:0">New Intake Submission</h2>
+                <p>A new applicant has expressed interest in <strong>{payload.grant_name or grant.grant_name}</strong>
+                via the SyrHousing Grant Dashboard.</p>
+                <table style="border-collapse:collapse;width:100%;font-size:14px;margin:16px 0">
+                    <tr style="background:#f8fafc"><td style="padding:8px 12px;font-weight:bold;width:140px">Name</td><td style="padding:8px 12px">{payload.full_name}</td></tr>
+                    <tr><td style="padding:8px 12px;font-weight:bold">Email</td><td style="padding:8px 12px"><a href="mailto:{payload.email}" style="color:#0d9488">{payload.email}</a></td></tr>
+                    <tr style="background:#f8fafc"><td style="padding:8px 12px;font-weight:bold">Phone</td><td style="padding:8px 12px">{payload.phone or '—'}</td></tr>
+                    <tr><td style="padding:8px 12px;font-weight:bold">Age</td><td style="padding:8px 12px">{payload.age or '—'}</td></tr>
+                    <tr style="background:#f8fafc"><td style="padding:8px 12px;font-weight:bold">Annual Income</td><td style="padding:8px 12px">{'${:,.0f}'.format(payload.annual_income) if payload.annual_income else '—'}</td></tr>
+                    <tr><td style="padding:8px 12px;font-weight:bold">Property Type</td><td style="padding:8px 12px">{prop_str}</td></tr>
+                    <tr style="background:#f8fafc"><td style="padding:8px 12px;font-weight:bold">Repair Need</td><td style="padding:8px 12px">{repair_str}</td></tr>
+                    {'<tr><td style="padding:8px 12px;font-weight:bold">Notes</td><td style="padding:8px 12px">' + payload.message + '</td></tr>' if payload.message else ''}
+                </table>
+                <p style="color:#6b7280;font-size:12px;">Submitted via SyrHousing Grant Dashboard</p>
+            """)
+            send_email(grant.agency_email, f"New Grant Inquiry — {grant.grant_name}", agency_html)
 
     return {"status": "received", "application_id": app.id, "grant_id": payload.grant_id}
 

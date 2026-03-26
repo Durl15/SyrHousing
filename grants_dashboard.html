@@ -69,6 +69,80 @@
   /* ── Layout ──────────────────────────────────────────────────────────── */
   main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
 
+  /* ── Wizard ──────────────────────────────────────────────────────────── */
+  .wizard-progress {
+    display: flex; align-items: center; margin-bottom: 2rem;
+  }
+  .wizard-step-indicator {
+    display: flex; flex-direction: column; align-items: center; gap: .3rem;
+    flex: 1; position: relative;
+  }
+  .wizard-step-indicator:not(:last-child)::after {
+    content: ''; position: absolute;
+    top: 16px; left: calc(50% + 16px);
+    width: calc(100% - 32px); height: 2px;
+    background: var(--border);
+    transition: background .3s;
+  }
+  .wizard-step-indicator.done:not(:last-child)::after,
+  .wizard-step-indicator.active:not(:last-child)::after {
+    background: var(--teal);
+  }
+  .step-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .85rem;
+    background: var(--border); color: var(--muted);
+    transition: background .3s, color .3s;
+    z-index: 1; position: relative;
+  }
+  .wizard-step-indicator.active .step-dot {
+    background: var(--teal); color: #fff;
+  }
+  .wizard-step-indicator.done .step-dot {
+    background: var(--navy); color: #fff;
+  }
+  .step-label {
+    font-size: .7rem; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .wizard-step-indicator.active .step-label { color: var(--teal); }
+  .wizard-step-indicator.done .step-label  { color: var(--navy); }
+
+  .wizard-pane { display: none; }
+  .wizard-pane.active { display: block; }
+
+  .wizard-pane h3 {
+    color: var(--navy); font-size: 1.05rem; margin-bottom: .25rem;
+  }
+  .wizard-pane .step-hint {
+    color: var(--muted); font-size: .875rem; margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+  .wizard-nav {
+    display: flex; gap: .75rem; align-items: center; margin-top: 1.5rem; flex-wrap: wrap;
+  }
+
+  .option-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: .65rem;
+    margin-bottom: .5rem;
+  }
+  .option-card {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: .75rem .9rem;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    background: var(--bg);
+    text-align: center;
+  }
+  .option-card:hover { border-color: var(--teal-light); background: var(--teal-pale); }
+  .option-card.selected { border-color: var(--teal); background: var(--teal-pale); }
+  .option-card .opt-icon { font-size: 1.4rem; display: block; margin-bottom: .3rem; }
+  .option-card .opt-label { font-size: .8rem; font-weight: 600; color: var(--navy); }
+
   /* ── Quiz Card ───────────────────────────────────────────────────────── */
   .quiz-card {
     background: var(--card-bg);
@@ -484,58 +558,140 @@
 <!-- ── Main ────────────────────────────────────────────────────────────────── -->
 <main>
 
-  <!-- Eligibility Quiz -->
+  <!-- Eligibility Wizard -->
   <div class="quiz-card">
     <h2>Find Grants You Qualify For</h2>
-    <p class="hint">Answer four quick questions to see your personalized, ranked grant list.</p>
+    <p class="hint">Answer a few quick questions to see your personalized, ranked grant list.</p>
 
-    <form id="quiz-form">
-      <div class="form-grid">
+    <!-- Progress bar -->
+    <div class="wizard-progress">
+      <div class="wizard-step-indicator active" id="ind-1">
+        <div class="step-dot">1</div>
+        <div class="step-label">You</div>
+      </div>
+      <div class="wizard-step-indicator" id="ind-2">
+        <div class="step-dot">2</div>
+        <div class="step-label">Income</div>
+      </div>
+      <div class="wizard-step-indicator" id="ind-3">
+        <div class="step-dot">3</div>
+        <div class="step-label">Home</div>
+      </div>
+      <div class="wizard-step-indicator" id="ind-4">
+        <div class="step-dot">4</div>
+        <div class="step-label">Repairs</div>
+      </div>
+    </div>
+
+    <!-- Step 1: About you -->
+    <div class="wizard-pane active" id="pane-1">
+      <h3>About You</h3>
+      <p class="step-hint">Your age helps us find programs with age requirements — many grants are specifically for seniors 60+.</p>
+      <div class="form-grid" style="max-width:420px">
         <div class="form-group">
-          <label for="f-age">Your Age</label>
-          <input type="number" id="f-age" name="age" min="18" max="120" placeholder="e.g. 68" required>
+          <label for="f-age">Your Age *</label>
+          <input type="number" id="f-age" min="18" max="120" placeholder="e.g. 68">
         </div>
         <div class="form-group">
-          <label for="f-income">Annual Household Income ($)</label>
-          <input type="number" id="f-income" name="income" min="0" placeholder="e.g. 42000" required>
-        </div>
-        <div class="form-group">
-          <label for="f-proptype">Property Type</label>
-          <select id="f-proptype" name="property_type" required>
-            <option value="">— select —</option>
-            <option value="single_family">Single Family Home</option>
-            <option value="multifamily">Multi-Family (2–4 units)</option>
-            <option value="condo">Condominium</option>
-            <option value="co_op">Co-Op</option>
-            <option value="townhouse">Townhouse</option>
-            <option value="mobile_home">Mobile / Manufactured Home</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="f-repair">Primary Repair Need</label>
-          <select id="f-repair" name="repair_category" required>
-            <option value="">— select —</option>
-            <option value="emergency_repairs">Emergency Repairs</option>
-            <option value="energy_efficiency">Energy Efficiency</option>
-            <option value="accessibility">Accessibility / ADA</option>
-            <option value="structural">Structural / Code Violations</option>
-            <option value="historic_preservation">Historic Preservation</option>
+          <label for="f-household">Household Size</label>
+          <select id="f-household">
+            <option value="1">1 — just me</option>
+            <option value="2">2 people</option>
+            <option value="3">3 people</option>
+            <option value="4">4 people</option>
+            <option value="5">5 or more</option>
           </select>
         </div>
       </div>
+      <div class="wizard-nav">
+        <button class="btn btn-primary" onclick="wizardNext(1)">Next: Income →</button>
+      </div>
+    </div>
 
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary" id="btn-match">
+    <!-- Step 2: Income -->
+    <div class="wizard-pane" id="pane-2">
+      <h3>Household Income</h3>
+      <p class="step-hint">Enter your total annual household income — this includes wages, Social Security, pension, disability benefits, and income from all people living with you.</p>
+      <div class="form-group" style="max-width:260px">
+        <label for="f-income">Annual Household Income ($) *</label>
+        <input type="number" id="f-income" min="0" placeholder="e.g. 42000">
+      </div>
+      <div class="wizard-nav">
+        <button class="btn btn-outline" onclick="wizardBack(2)">← Back</button>
+        <button class="btn btn-primary" onclick="wizardNext(2)">Next: Your Home →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Property type -->
+    <div class="wizard-pane" id="pane-3">
+      <h3>Your Home</h3>
+      <p class="step-hint">Select the type of home you own. Most grant programs require you to be the owner and primary resident.</p>
+      <div class="option-grid" id="proptype-options">
+        <div class="option-card" data-val="single_family" onclick="selectOption('proptype','single_family',this)">
+          <span class="opt-icon">🏠</span><span class="opt-label">Single Family</span>
+        </div>
+        <div class="option-card" data-val="multifamily" onclick="selectOption('proptype','multifamily',this)">
+          <span class="opt-icon">🏘</span><span class="opt-label">Multi-Family</span>
+        </div>
+        <div class="option-card" data-val="condo" onclick="selectOption('proptype','condo',this)">
+          <span class="opt-icon">🏢</span><span class="opt-label">Condo</span>
+        </div>
+        <div class="option-card" data-val="co_op" onclick="selectOption('proptype','co_op',this)">
+          <span class="opt-icon">🤝</span><span class="opt-label">Co-Op</span>
+        </div>
+        <div class="option-card" data-val="townhouse" onclick="selectOption('proptype','townhouse',this)">
+          <span class="opt-icon">🏗</span><span class="opt-label">Townhouse</span>
+        </div>
+        <div class="option-card" data-val="mobile_home" onclick="selectOption('proptype','mobile_home',this)">
+          <span class="opt-icon">🚐</span><span class="opt-label">Mobile Home</span>
+        </div>
+      </div>
+      <!-- hidden input keeps value for localStorage -->
+      <input type="hidden" id="f-proptype">
+      <div class="wizard-nav">
+        <button class="btn btn-outline" onclick="wizardBack(3)">← Back</button>
+        <button class="btn btn-primary" onclick="wizardNext(3)">Next: Repair Need →</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Repair need -->
+    <div class="wizard-pane" id="pane-4">
+      <h3>What Do You Need Fixed?</h3>
+      <p class="step-hint">Choose the most urgent issue. You can explore other categories after seeing your results.</p>
+      <div class="option-grid" id="repair-options">
+        <div class="option-card" data-val="emergency_repairs" onclick="selectOption('repair','emergency_repairs',this)">
+          <span class="opt-icon">🚨</span><span class="opt-label">Emergency Repairs</span>
+        </div>
+        <div class="option-card" data-val="energy_efficiency" onclick="selectOption('repair','energy_efficiency',this)">
+          <span class="opt-icon">⚡</span><span class="opt-label">Energy Efficiency</span>
+        </div>
+        <div class="option-card" data-val="accessibility" onclick="selectOption('repair','accessibility',this)">
+          <span class="opt-icon">♿</span><span class="opt-label">Accessibility / ADA</span>
+        </div>
+        <div class="option-card" data-val="structural" onclick="selectOption('repair','structural',this)">
+          <span class="opt-icon">🏗</span><span class="opt-label">Structural / Code</span>
+        </div>
+        <div class="option-card" data-val="historic_preservation" onclick="selectOption('repair','historic_preservation',this)">
+          <span class="opt-icon">🏛</span><span class="opt-label">Historic Preservation</span>
+        </div>
+      </div>
+      <input type="hidden" id="f-repair">
+      <div style="margin-top:1rem">
+        <label style="font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+          <input type="checkbox" id="include-closed" style="accent-color:var(--teal)">
+          Include programs that are currently closed (may reopen)
+        </label>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn btn-outline" onclick="wizardBack(4)">← Back</button>
+        <button class="btn btn-primary" id="btn-match" onclick="runMatch()">
           <span id="btn-match-text">🔍 Find My Grants</span>
           <span id="btn-match-spinner" style="display:none"><span class="spinner"></span></span>
         </button>
-        <button type="button" class="btn btn-outline" id="btn-clear">Clear</button>
-        <label style="font-size:.85rem; color:var(--muted); display:flex; align-items:center; gap:.4rem; cursor:pointer;">
-          <input type="checkbox" id="include-closed" style="accent-color:var(--teal)">
-          Include closed grants
-        </label>
+        <button class="btn btn-outline" id="btn-clear" onclick="wizardReset()">Clear All</button>
       </div>
-    </form>
+    </div>
+
   </div>
 
   <!-- Filters (shown after search) -->
@@ -925,50 +1081,6 @@ async function loadStats() {
   }
 }
 
-// ── Main quiz submit ──────────────────────────────────────────────────────
-document.getElementById('quiz-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  const age = fd.get('age');
-  const income = fd.get('income');
-  const property_type = fd.get('property_type');
-  const repair_category = fd.get('repair_category');
-  const include_closed = document.getElementById('include-closed').checked;
-
-  if (!property_type || !repair_category) {
-    toast('Please select a property type and repair category.', 'error'); return;
-  }
-
-  const btn = document.getElementById('btn-match');
-  document.getElementById('btn-match-text').style.display = 'none';
-  document.getElementById('btn-match-spinner').style.display = 'inline';
-  btn.disabled = true;
-
-  lastQuery = { age, income, property_type, repair_category, include_closed };
-
-  const params = new URLSearchParams({ age, income, property_type, repair_category, include_closed });
-  try {
-    const res = await fetch(`${API_BASE}/api/v2/grants/match?${params}`);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || `HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    lastResults = data.results || [];
-    renderResults(lastResults);
-    toast(`Found ${lastResults.length} matching grant${lastResults.length !== 1 ? 's' : ''}.`, 'success');
-  } catch (err) {
-    toast(`Error: ${err.message}`, 'error');
-    document.getElementById('initial-state').innerHTML = `
-      <div class="icon">⚠️</div>
-      <h3>Could not reach the API</h3>
-      <p>Make sure the backend is running at <strong>${API_BASE}</strong> and try again.</p>`;
-  } finally {
-    document.getElementById('btn-match-text').style.display = 'inline';
-    document.getElementById('btn-match-spinner').style.display = 'none';
-    btn.disabled = false;
-  }
-});
 
 function renderResults(results) {
   const container = document.getElementById('cards-container');
@@ -1013,19 +1125,6 @@ function renderResults(results) {
   document.getElementById('btn-pdf').disabled = false;
 }
 
-// ── Clear ──────────────────────────────────────────────────────────────────
-document.getElementById('btn-clear').addEventListener('click', () => {
-  document.getElementById('quiz-form').reset();
-  lastResults = [];
-  lastQuery = {};
-  document.getElementById('results-section').style.display = 'none';
-  document.getElementById('filter-section').style.display = 'none';
-  document.getElementById('initial-state').style.display = 'block';
-  document.getElementById('initial-state').innerHTML = `
-    <div class="icon">🏡</div>
-    <h3>Discover Housing Grants</h3>
-    <p>Fill in the eligibility quiz above to see grants ranked by how well you match.</p>`;
-});
 
 // ── Exports ────────────────────────────────────────────────────────────────
 function buildExportUrl(fmt) {
@@ -1046,14 +1145,129 @@ document.getElementById('btn-pdf').addEventListener('click', () => {
   toast('Generating PDF report…', 'info');
 });
 
+// ── Wizard state ──────────────────────────────────────────────────────────
+let wizardStep = 1;
+let wizardSelections = { proptype: '', repair: '' };
+
+function selectOption(kind, val, el) {
+  const grid = document.getElementById(kind === 'proptype' ? 'proptype-options' : 'repair-options');
+  grid.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  wizardSelections[kind] = val;
+  document.getElementById(kind === 'proptype' ? 'f-proptype' : 'f-repair').value = val;
+  saveProfile();
+}
+
+function wizardGoto(step) {
+  // Update panes
+  document.querySelectorAll('.wizard-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById(`pane-${step}`).classList.add('active');
+  // Update indicators
+  for (let i = 1; i <= 4; i++) {
+    const ind = document.getElementById(`ind-${i}`);
+    ind.classList.remove('active', 'done');
+    if (i < step) ind.classList.add('done');
+    else if (i === step) ind.classList.add('active');
+  }
+  wizardStep = step;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function wizardNext(from) {
+  if (from === 1) {
+    const age = document.getElementById('f-age').value;
+    if (!age || age < 18 || age > 120) { toast('Please enter a valid age (18–120).', 'error'); return; }
+  }
+  if (from === 2) {
+    const income = document.getElementById('f-income').value;
+    if (!income || income < 0) { toast('Please enter your annual household income.', 'error'); return; }
+  }
+  if (from === 3) {
+    if (!wizardSelections.proptype) { toast('Please select your property type.', 'error'); return; }
+  }
+  saveProfile();
+  wizardGoto(from + 1);
+}
+
+function wizardBack(from) { wizardGoto(from - 1); }
+
+function wizardReset() {
+  wizardSelections = { proptype: '', repair: '' };
+  document.getElementById('f-age').value = '';
+  document.getElementById('f-income').value = '';
+  document.getElementById('f-proptype').value = '';
+  document.getElementById('f-repair').value = '';
+  document.getElementById('f-household').value = '1';
+  document.getElementById('include-closed').checked = false;
+  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  lastResults = [];
+  lastQuery = {};
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('filter-section').style.display = 'none';
+  document.getElementById('initial-state').style.display = 'block';
+  document.getElementById('initial-state').innerHTML = `
+    <div class="icon">🏡</div>
+    <h3>Discover Housing Grants</h3>
+    <p>Fill in the eligibility wizard above to see grants ranked by how well you match.</p>`;
+  try { localStorage.removeItem(PROFILE_KEY); } catch {}
+  wizardGoto(1);
+}
+
+async function runMatch() {
+  const age = document.getElementById('f-age').value;
+  const income = document.getElementById('f-income').value;
+  const property_type = wizardSelections.proptype;
+  const repair_category = wizardSelections.repair;
+  const include_closed = document.getElementById('include-closed').checked;
+
+  if (!repair_category) { toast('Please select a repair category.', 'error'); return; }
+  if (!age || !income) { toast('Please go back and fill in age and income.', 'error'); return; }
+
+  const btn = document.getElementById('btn-match');
+  document.getElementById('btn-match-text').style.display = 'none';
+  document.getElementById('btn-match-spinner').style.display = 'inline';
+  btn.disabled = true;
+
+  lastQuery = { age, income, property_type, repair_category, include_closed };
+  saveProfile();
+
+  const params = new URLSearchParams({ age, income, property_type, repair_category, include_closed });
+  try {
+    const res = await fetch(`${API_BASE}/api/v2/grants/match?${params}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    lastResults = data.results || [];
+    renderResults(lastResults);
+    toast(`Found ${lastResults.length} matching grant${lastResults.length !== 1 ? 's' : ''}.`, 'success');
+  } catch (err) {
+    toast(`Error: ${err.message}`, 'error');
+    document.getElementById('initial-state').style.display = 'block';
+    document.getElementById('initial-state').innerHTML = `
+      <div class="icon">⚠️</div>
+      <h3>Could not reach the API</h3>
+      <p>Make sure the backend is running at <strong>${API_BASE}</strong> and try again.</p>`;
+  } finally {
+    document.getElementById('btn-match-text').style.display = 'inline';
+    document.getElementById('btn-match-spinner').style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
 // ── localStorage profile save/restore ─────────────────────────────────────
 const PROFILE_KEY = 'syrhousing_profile';
-const PROFILE_FIELDS = ['f-age','f-income','f-proptype','f-repair'];
 
 function saveProfile() {
-  const profile = {};
-  PROFILE_FIELDS.forEach(id => { profile[id] = document.getElementById(id).value; });
-  profile['include-closed'] = document.getElementById('include-closed').checked;
+  const profile = {
+    age: document.getElementById('f-age').value,
+    income: document.getElementById('f-income').value,
+    household: document.getElementById('f-household').value,
+    proptype: wizardSelections.proptype,
+    repair: wizardSelections.repair,
+    include_closed: document.getElementById('include-closed').checked,
+  };
   try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch {}
 }
 
@@ -1061,26 +1275,29 @@ function restoreProfile() {
   try {
     const raw = localStorage.getItem(PROFILE_KEY);
     if (!raw) return;
-    const profile = JSON.parse(raw);
-    PROFILE_FIELDS.forEach(id => {
-      if (profile[id] != null) document.getElementById(id).value = profile[id];
-    });
-    if (profile['include-closed'] != null)
-      document.getElementById('include-closed').checked = profile['include-closed'];
+    const p = JSON.parse(raw);
+    if (p.age)      document.getElementById('f-age').value = p.age;
+    if (p.income)   document.getElementById('f-income').value = p.income;
+    if (p.household) document.getElementById('f-household').value = p.household;
+    if (p.include_closed) document.getElementById('include-closed').checked = p.include_closed;
+    if (p.proptype) {
+      wizardSelections.proptype = p.proptype;
+      document.getElementById('f-proptype').value = p.proptype;
+      const el = document.querySelector(`#proptype-options [data-val="${p.proptype}"]`);
+      if (el) el.classList.add('selected');
+    }
+    if (p.repair) {
+      wizardSelections.repair = p.repair;
+      document.getElementById('f-repair').value = p.repair;
+      const el = document.querySelector(`#repair-options [data-val="${p.repair}"]`);
+      if (el) el.classList.add('selected');
+    }
+    // Jump to last step if fully filled
+    if (p.age && p.income && p.proptype && p.repair) wizardGoto(4);
+    else if (p.age && p.income && p.proptype) wizardGoto(3);
+    else if (p.age && p.income) wizardGoto(2);
   } catch {}
 }
-
-PROFILE_FIELDS.forEach(id => {
-  document.getElementById(id).addEventListener('change', saveProfile);
-  document.getElementById(id).addEventListener('input', saveProfile);
-});
-document.getElementById('include-closed').addEventListener('change', saveProfile);
-
-// Clear button also clears profile
-const _origClear = document.getElementById('btn-clear').onclick;
-document.getElementById('btn-clear').addEventListener('click', () => {
-  try { localStorage.removeItem(PROFILE_KEY); } catch {}
-});
 
 
 // ── Grant detail modal ────────────────────────────────────────────────────
@@ -1168,9 +1385,9 @@ function showIntake(g) {
     const raw = localStorage.getItem(PROFILE_KEY);
     if (raw) {
       const p = JSON.parse(raw);
-      if (p['f-age']) document.getElementById('intake-age').value = p['f-age'];
-      if (p['f-income']) document.getElementById('intake-income').value = p['f-income'];
-      if (p['f-proptype']) document.getElementById('intake-proptype').value = p['f-proptype'];
+      if (p.age)      document.getElementById('intake-age').value = p.age;
+      if (p.income)   document.getElementById('intake-income').value = p.income;
+      if (p.proptype) document.getElementById('intake-proptype').value = p.proptype;
     }
   } catch {}
 
