@@ -411,6 +411,60 @@
     header { padding: 0 1rem; }
     .logo span.header-sub { display: none; }
   }
+
+  /* ── Contact links on cards ───────────────────────────────────────────── */
+  .contact-bar {
+    display: flex; gap: .75rem; flex-wrap: wrap; align-items: center;
+    padding: .6rem 1.25rem;
+    background: #f8fafc;
+    border-top: 1px solid var(--border);
+    font-size: .82rem;
+  }
+  .contact-link {
+    display: inline-flex; align-items: center; gap: .3rem;
+    color: var(--teal); text-decoration: none; font-weight: 600;
+  }
+  .contact-link:hover { text-decoration: underline; }
+
+  /* ── Detail modal extras ─────────────────────────────────────────────── */
+  .detail-section { margin-bottom: 1.25rem; }
+  .detail-section h4 {
+    font-size: .75rem; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .06em; margin-bottom: .6rem;
+  }
+  .info-pill {
+    display: inline-flex; align-items: center; gap: .3rem;
+    background: var(--teal-pale); color: var(--teal);
+    border-radius: 6px; padding: .3rem .7rem;
+    font-size: .82rem; font-weight: 600; margin: .2rem;
+  }
+  .contact-block {
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+    padding: .9rem 1.1rem; display: flex; flex-direction: column; gap: .4rem;
+  }
+  .contact-block a {
+    color: var(--teal); font-weight: 700; font-size: .95rem; text-decoration: none;
+  }
+  .contact-block a:hover { text-decoration: underline; }
+
+  /* ── Intake modal ────────────────────────────────────────────────────── */
+  .intake-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 480px) { .intake-grid { grid-template-columns: 1fr; } }
+  .intake-grid .span-2 { grid-column: 1 / -1; }
+
+  /* ── Print ───────────────────────────────────────────────────────────── */
+  @media print {
+    header, .quiz-card, #filter-section, .results-header .export-group,
+    .card-footer, .contact-bar, #toast-container, .modal-backdrop { display: none !important; }
+    body { background: #fff; }
+    main { padding: .5rem; max-width: 100%; }
+    .cards-grid { display: block; }
+    .grant-card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; margin-bottom: 1rem; }
+    .results-header { margin-bottom: .75rem; }
+  }
 </style>
 </head>
 <body>
@@ -502,8 +556,9 @@
     <div class="results-header">
       <h3 id="results-count">0 grants matched</h3>
       <div class="export-group">
-        <button class="btn btn-secondary btn-sm" id="btn-csv" disabled>⬇ Export CSV</button>
-        <button class="btn btn-secondary btn-sm" id="btn-pdf" disabled>📄 Export PDF</button>
+        <button class="btn btn-secondary btn-sm" id="btn-csv" disabled>⬇ CSV</button>
+        <button class="btn btn-secondary btn-sm" id="btn-pdf" disabled>📄 PDF</button>
+        <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print</button>
       </div>
     </div>
     <div class="cards-grid" id="cards-container"></div>
@@ -526,6 +581,79 @@
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ── Detail Modal ─────────────────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="detail-modal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h3 id="detail-modal-title">Grant Details</h3>
+      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    </div>
+    <div class="modal-body" id="detail-modal-body"></div>
+  </div>
+</div>
+
+<!-- ── Intake Modal ─────────────────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="intake-modal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <h3 id="intake-modal-title">Express Interest</h3>
+      <button class="modal-close" onclick="closeIntakeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.875rem;color:var(--muted);margin-bottom:1.25rem">
+        Submit your contact information and we'll route your inquiry to the right agency.
+      </p>
+      <input type="hidden" id="intake-grant-id">
+      <div class="intake-grid">
+        <div class="form-group">
+          <label for="intake-name">Full Name *</label>
+          <input type="text" id="intake-name" placeholder="Jane Smith" required>
+        </div>
+        <div class="form-group">
+          <label for="intake-email">Email *</label>
+          <input type="email" id="intake-email" placeholder="jane@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="intake-phone">Phone</label>
+          <input type="tel" id="intake-phone" placeholder="(315) 555-0100">
+        </div>
+        <div class="form-group">
+          <label for="intake-age">Age</label>
+          <input type="number" id="intake-age" min="18" max="120" placeholder="68">
+        </div>
+        <div class="form-group">
+          <label for="intake-income">Annual Income ($)</label>
+          <input type="number" id="intake-income" min="0" placeholder="42000">
+        </div>
+        <div class="form-group">
+          <label for="intake-proptype">Property Type</label>
+          <select id="intake-proptype">
+            <option value="">— optional —</option>
+            <option value="single_family">Single Family</option>
+            <option value="multifamily">Multi-Family</option>
+            <option value="condo">Condo</option>
+            <option value="co_op">Co-Op</option>
+            <option value="townhouse">Townhouse</option>
+            <option value="mobile_home">Mobile Home</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label for="intake-message">Additional Notes</label>
+          <textarea id="intake-message" rows="3" placeholder="Describe your repair needs, situation, or any questions…"
+            style="padding:.6rem .85rem;border:1.5px solid var(--border);border-radius:6px;font-size:.95rem;width:100%;resize:vertical;font-family:inherit"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:.5rem">
+        <button class="btn btn-outline" onclick="closeIntakeModal()">Cancel</button>
+        <button class="btn btn-primary" id="btn-intake-submit" onclick="submitIntake()">
+          <span id="intake-btn-text">Submit Interest</span>
+          <span id="intake-btn-spinner" style="display:none"><span class="spinner"></span></span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -673,6 +801,9 @@ function renderCard(g) {
   const cats = Array.isArray(g.repair_categories) ? g.repair_categories : [];
   const firstCat = cats[0] || 'default';
 
+  const gJson = JSON.stringify(g).replace(/'/g,"&#39;");
+  const hasContact = g.agency_phone || g.agency_email;
+
   return `
   <div class="grant-card" data-cats="${cats.join(' ')}">
     <div class="card-header">
@@ -711,12 +842,18 @@ function renderCard(g) {
       ${ecNotes.length ? `<div class="detail-row"><span class="detail-label">Notes</span><span class="detail-value" style="font-size:.82rem;color:var(--muted)">${escHtml(ecNotes.join(' · '))}</span></div>` : ''}
       ${g.description ? `<div class="description">${escHtml(g.description)}</div>` : ''}
     </div>
+    ${hasContact ? `
+    <div class="contact-bar">
+      ${g.agency_phone ? `<a class="contact-link" href="tel:${escAttr(g.agency_phone)}">📞 ${escHtml(g.agency_phone)}</a>` : ''}
+      ${g.agency_email ? `<a class="contact-link" href="mailto:${escAttr(g.agency_email)}">✉ ${escHtml(g.agency_email)}</a>` : ''}
+    </div>` : ''}
     <div class="card-footer">
       ${g.application_url
         ? `<a href="${escAttr(g.application_url)}" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Apply Now ↗</a>`
         : '<span style="font-size:.8rem;color:var(--muted)">Contact agency to apply</span>'}
-      <button class="btn btn-outline btn-sm" onclick='showChecklist(${JSON.stringify(g).replace(/'/g,"&#39;")})'>📋 Checklist</button>
-      ${g.agency_phone ? `<a href="tel:${escAttr(g.agency_phone)}" style="font-size:.8rem;color:var(--teal);text-decoration:none">📞 ${escHtml(g.agency_phone)}</a>` : ''}
+      <button class="btn btn-outline btn-sm" onclick='showDetail(${gJson})'>🔍 Details</button>
+      <button class="btn btn-outline btn-sm" onclick='showChecklist(${gJson})'>📋 Checklist</button>
+      <button class="btn btn-secondary btn-sm" onclick='showIntake(${gJson})'>✋ Express Interest</button>
     </div>
   </div>`;
 }
@@ -851,10 +988,17 @@ function renderResults(results) {
   if (!results.length) {
     container.innerHTML = `
       <div style="grid-column:1/-1">
-        <div class="state-box">
-          <div class="icon">🔎</div>
-          <h3>No grants matched</h3>
-          <p>Try adjusting your income, age, or repair category, or enable "Include closed grants".</p>
+        <div class="state-box" style="text-align:left;max-width:560px;margin:0 auto">
+          <div class="icon" style="text-align:center">🔎</div>
+          <h3 style="text-align:center">No grants matched your criteria</h3>
+          <p style="text-align:center;margin-bottom:1.5rem">Here are a few things to try:</p>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:.75rem">
+            <li style="display:flex;gap:.6rem;align-items:flex-start"><span style="color:var(--teal);font-size:1.1rem">✓</span><span><strong>Include closed grants</strong> — check the box above the search button to see programs that may reopen.</span></li>
+            <li style="display:flex;gap:.6rem;align-items:flex-start"><span style="color:var(--teal);font-size:1.1rem">✓</span><span><strong>Try a different repair category</strong> — some programs cover multiple types (e.g. "Emergency Repairs" is the broadest category).</span></li>
+            <li style="display:flex;gap:.6rem;align-items:flex-start"><span style="color:var(--teal);font-size:1.1rem">✓</span><span><strong>Adjust your income estimate</strong> — household income includes wages, Social Security, pension, and benefits for all members.</span></li>
+            <li style="display:flex;gap:.6rem;align-items:flex-start"><span style="color:var(--teal);font-size:1.1rem">✓</span><span><strong>Call 211</strong> — dial <a href="tel:211" style="color:var(--teal);font-weight:600">211</a> to speak with a local housing counselor who can identify additional programs.</span></li>
+            <li style="display:flex;gap:.6rem;align-items:flex-start"><span style="color:var(--teal);font-size:1.1rem">✓</span><span><strong>Contact CNY Community Action</strong> — <a href="tel:+13154742693" style="color:var(--teal);font-weight:600">(315) 474-2693</a> for emergency assistance regardless of income.</span></li>
+          </ul>
         </div>
       </div>`;
     count.textContent = '0 grants matched';
@@ -902,7 +1046,219 @@ document.getElementById('btn-pdf').addEventListener('click', () => {
   toast('Generating PDF report…', 'info');
 });
 
+// ── localStorage profile save/restore ─────────────────────────────────────
+const PROFILE_KEY = 'syrhousing_profile';
+const PROFILE_FIELDS = ['f-age','f-income','f-proptype','f-repair'];
+
+function saveProfile() {
+  const profile = {};
+  PROFILE_FIELDS.forEach(id => { profile[id] = document.getElementById(id).value; });
+  profile['include-closed'] = document.getElementById('include-closed').checked;
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch {}
+}
+
+function restoreProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (!raw) return;
+    const profile = JSON.parse(raw);
+    PROFILE_FIELDS.forEach(id => {
+      if (profile[id] != null) document.getElementById(id).value = profile[id];
+    });
+    if (profile['include-closed'] != null)
+      document.getElementById('include-closed').checked = profile['include-closed'];
+  } catch {}
+}
+
+PROFILE_FIELDS.forEach(id => {
+  document.getElementById(id).addEventListener('change', saveProfile);
+  document.getElementById(id).addEventListener('input', saveProfile);
+});
+document.getElementById('include-closed').addEventListener('change', saveProfile);
+
+// Clear button also clears profile
+const _origClear = document.getElementById('btn-clear').onclick;
+document.getElementById('btn-clear').addEventListener('click', () => {
+  try { localStorage.removeItem(PROFILE_KEY); } catch {}
+});
+
+
+// ── Grant detail modal ────────────────────────────────────────────────────
+function showDetail(g) {
+  const ec = g.eligibility_criteria || {};
+  const ecRows = [
+    ec.requires_owner_occupied ? '✓ Owner-occupied required' : null,
+    ec.requires_primary_residence ? '✓ Primary residence required' : null,
+    ec.requires_us_citizen ? '✓ US Citizen required' : null,
+    ec.first_time_buyer_required ? '✓ First-time buyer required' : null,
+    ec.geographic_restriction ? `📍 ${ec.geographic_restriction}` : null,
+    ec.credit_score_min ? `Credit score ≥ ${ec.credit_score_min}` : null,
+    ec.additional_notes ? `📝 ${ec.additional_notes}` : null,
+  ].filter(Boolean);
+
+  const hasContact = g.agency_phone || g.agency_email;
+
+  document.getElementById('detail-modal-title').textContent = g.grant_name;
+  document.getElementById('detail-modal-body').innerHTML = `
+    ${g.description ? `<div class="detail-section"><h4>About This Grant</h4><p style="font-size:.9rem;line-height:1.6;color:var(--text)">${escHtml(g.description)}</p></div>` : ''}
+
+    <div class="detail-section">
+      <h4>Funding & Eligibility</h4>
+      <div style="display:flex;flex-wrap:wrap;gap:.25rem">
+        <span class="info-pill">💰 ${fmtCurrency(g.amount_min)}–${fmtCurrency(g.amount_max)}</span>
+        ${g.income_limit ? `<span class="info-pill">Income ≤ ${fmtCurrency(g.income_limit)}/yr</span>` : ''}
+        ${g.age_min != null ? `<span class="info-pill">Age ${g.age_min}+</span>` : ''}
+        ${g.age_max != null ? `<span class="info-pill">Age ≤ ${g.age_max}</span>` : ''}
+        ${(g.property_types||[]).map(t=>`<span class="info-pill">${t.replace(/_/g,' ')}</span>`).join('')}
+        ${(g.repair_categories||[]).map(c=>`<span class="info-pill">🔧 ${c.replace(/_/g,' ')}</span>`).join('')}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h4>Deadline</h4>
+      ${countdownHtml(g.deadline)}
+      ${g.status === 'closing_soon' ? `<p style="font-size:.82rem;color:var(--soon);margin-top:.4rem;font-weight:600">⚠ This program is closing soon — apply as soon as possible.</p>` : ''}
+    </div>
+
+    ${ecRows.length ? `
+    <div class="detail-section">
+      <h4>Additional Requirements</h4>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:.4rem">
+        ${ecRows.map(r=>`<li style="font-size:.875rem;color:var(--text)">${escHtml(r)}</li>`).join('')}
+      </ul>
+    </div>` : ''}
+
+    ${hasContact ? `
+    <div class="detail-section">
+      <h4>Contact Information</h4>
+      <div class="contact-block">
+        ${g.source ? `<span style="font-size:.82rem;color:var(--muted);font-weight:600">${escHtml(g.source)}</span>` : ''}
+        ${g.agency_phone ? `<a href="tel:${escAttr(g.agency_phone)}">📞 ${escHtml(g.agency_phone)}</a>` : ''}
+        ${g.agency_email ? `<a href="mailto:${escAttr(g.agency_email)}">✉ ${escHtml(g.agency_email)}</a>` : ''}
+      </div>
+    </div>` : ''}
+
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem">
+      ${g.application_url ? `<a href="${escAttr(g.application_url)}" target="_blank" rel="noopener" class="btn btn-primary">Apply Now ↗</a>` : ''}
+      <button class="btn btn-secondary" onclick='closeDetailModal();showIntake(${JSON.stringify(g).replace(/'/g,"&#39;")})'>✋ Express Interest</button>
+      <button class="btn btn-outline" onclick='closeDetailModal();showChecklist(${JSON.stringify(g).replace(/'/g,"&#39;")})'>📋 Checklist</button>
+    </div>
+  `;
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeDetailModal() {
+  document.getElementById('detail-modal').classList.remove('open');
+}
+document.getElementById('detail-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeDetailModal();
+});
+
+
+// ── Intake form modal ─────────────────────────────────────────────────────
+let _intakeGrant = null;
+
+function showIntake(g) {
+  _intakeGrant = g;
+  document.getElementById('intake-modal-title').textContent = `Express Interest — ${g.grant_name}`;
+  document.getElementById('intake-grant-id').value = g.id;
+
+  // Pre-fill from saved profile
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p['f-age']) document.getElementById('intake-age').value = p['f-age'];
+      if (p['f-income']) document.getElementById('intake-income').value = p['f-income'];
+      if (p['f-proptype']) document.getElementById('intake-proptype').value = p['f-proptype'];
+    }
+  } catch {}
+
+  document.getElementById('intake-modal').classList.add('open');
+}
+
+function closeIntakeModal() {
+  document.getElementById('intake-modal').classList.remove('open');
+}
+document.getElementById('intake-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeIntakeModal();
+});
+
+async function submitIntake() {
+  const name = document.getElementById('intake-name').value.trim();
+  const email = document.getElementById('intake-email').value.trim();
+  if (!name || !email) { toast('Name and email are required.', 'error'); return; }
+
+  const btn = document.getElementById('btn-intake-submit');
+  btn.disabled = true;
+  document.getElementById('intake-btn-text').style.display = 'none';
+  document.getElementById('intake-btn-spinner').style.display = 'inline';
+
+  const payload = {
+    grant_id: document.getElementById('intake-grant-id').value,
+    grant_name: _intakeGrant ? _intakeGrant.grant_name : '',
+    full_name: name,
+    email: email,
+    phone: document.getElementById('intake-phone').value.trim() || null,
+    age: parseInt(document.getElementById('intake-age').value) || null,
+    annual_income: parseFloat(document.getElementById('intake-income').value) || null,
+    property_type: document.getElementById('intake-proptype').value || null,
+    message: document.getElementById('intake-message').value.trim() || null,
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/v2/grants/intake`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    toast('Interest submitted! The agency will be in touch.', 'success');
+    closeIntakeModal();
+    // Clear form
+    ['intake-name','intake-email','intake-phone','intake-message'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+  } catch (err) {
+    toast(`Submission failed: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('intake-btn-text').style.display = 'inline';
+    document.getElementById('intake-btn-spinner').style.display = 'none';
+  }
+}
+
+
+// ── Auto-refresh (re-query every 5 minutes if results are shown) ──────────
+setInterval(() => {
+  if (!lastResults.length || !lastQuery.age) return;
+  loadStats();
+  // Silently re-fetch results and update if data has changed
+  const params = new URLSearchParams(lastQuery);
+  fetch(`${API_BASE}/api/v2/grants/match?${params}`)
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (!data) return;
+      const newResults = data.results || [];
+      // Only re-render if status of any grant changed
+      const changed = newResults.some((g, i) =>
+        !lastResults[i] || g.match_score !== lastResults[i].match_score || g.status !== lastResults[i].status
+      );
+      if (changed || newResults.length !== lastResults.length) {
+        lastResults = newResults;
+        renderResults(lastResults);
+        toast('Grant list refreshed.', 'info');
+      }
+    })
+    .catch(() => {});
+}, 5 * 60 * 1000);
+
+
 // ── Boot ──────────────────────────────────────────────────────────────────
+restoreProfile();
 loadStats();
 </script>
 </body>

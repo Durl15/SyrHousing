@@ -79,6 +79,19 @@ class ApplicationCreateSchema(BaseModel):
     notes: Optional[str] = None
 
 
+class IntakeFormSchema(BaseModel):
+    grant_id: str
+    grant_name: str = ""
+    full_name: str = Field(..., min_length=1, max_length=200)
+    email: str = Field(..., min_length=5, max_length=200)
+    phone: Optional[str] = Field(None, max_length=30)
+    age: Optional[int] = Field(None, ge=0, le=120)
+    annual_income: Optional[float] = Field(None, ge=0)
+    property_type: Optional[str] = None
+    repair_need: Optional[str] = None
+    message: Optional[str] = Field(None, max_length=1000)
+
+
 # ── Helper ────────────────────────────────────────────────────────────────────
 
 def _grant_or_404(grant_id: str, db: Session) -> Grant:
@@ -347,6 +360,42 @@ def create_application(payload: ApplicationCreateSchema, db: Session = Depends(g
         logger.exception("Failed to create application")
         raise HTTPException(status_code=500, detail="Failed to create application")
     return app.to_dict()
+
+
+@router.post("/intake", status_code=201, summary="Submit an interest/intake form for a grant")
+def submit_intake(payload: IntakeFormSchema, db: Session = Depends(get_db)):
+    """
+    Lightweight intake form — stores as a GrantApplication with notes
+    containing all intake fields, so no extra table is needed.
+    """
+    # Validate grant exists (non-fatal if missing — could be an old link)
+    grant = db.query(Grant).filter(Grant.id == payload.grant_id).first()
+    notes_lines = [f"INTAKE FORM — {payload.grant_name}"]
+    if payload.phone:
+        notes_lines.append(f"Phone: {payload.phone}")
+    if payload.message:
+        notes_lines.append(f"Message: {payload.message}")
+
+    try:
+        app = GrantApplication(
+            grant_id=payload.grant_id,
+            applicant_name=payload.full_name,
+            applicant_email=payload.email,
+            applicant_age=payload.age,
+            applicant_income=payload.annual_income,
+            property_type=payload.property_type,
+            repair_category=payload.repair_need,
+            notes="\n".join(notes_lines),
+        )
+        db.add(app)
+        db.commit()
+        db.refresh(app)
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to save intake form")
+        raise HTTPException(status_code=500, detail="Failed to save intake form")
+
+    return {"status": "received", "application_id": app.id, "grant_id": payload.grant_id}
 
 
 @router.get("/{grant_id}/applications", summary="List applications for a grant")

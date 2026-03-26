@@ -13,6 +13,7 @@ from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 from .config import settings
 from .database import SessionLocal
 from .services.discovery.discovery_service import run_discovery
+from .models.grants_db import Grant
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,41 @@ def run_scheduled_discovery():
     except Exception as e:
         logger.error(f"Scheduled discovery failed: {e}", exc_info=True)
 
+    finally:
+        db.close()
+
+
+def refresh_grant_statuses():
+    """Weekly job: auto-update grant statuses based on deadline proximity."""
+    from datetime import date as date_cls
+    logger.info("Running weekly grant status refresh...")
+    db = SessionLocal()
+    try:
+        grants = db.query(Grant).all()
+        today = date_cls.today()
+        updated = 0
+        for grant in grants:
+            if not grant.deadline or grant.deadline in ("rolling", "annual"):
+                continue
+            try:
+                dl = date_cls.fromisoformat(grant.deadline)
+            except (ValueError, TypeError):
+                continue
+            days_left = (dl - today).days
+            if days_left < 0:
+                new_status = "closed"
+            elif days_left <= 30:
+                new_status = "closing_soon"
+            else:
+                new_status = "open"
+            if new_status != grant.status:
+                grant.status = new_status
+                updated += 1
+        db.commit()
+        logger.info("Grant status refresh complete: %d grant(s) updated", updated)
+    except Exception:
+        logger.exception("Grant status refresh failed")
+        db.rollback()
     finally:
         db.close()
 
@@ -102,6 +138,16 @@ def start_scheduler():
             name="Automated Grant Discovery",
             replace_existing=True,
             misfire_grace_time=3600,  # Allow 1 hour grace for missed runs
+        )
+
+        # Weekly grant status refresh — every Monday at 3 AM
+        scheduler.add_job(
+            func=refresh_grant_statuses,
+            trigger=CronTrigger(day_of_week="mon", hour=3, minute=0),
+            id="weekly_status_refresh",
+            name="Weekly Grant Status Refresh",
+            replace_existing=True,
+            misfire_grace_time=3600,
         )
 
         # Add event listener
