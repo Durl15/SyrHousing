@@ -8,6 +8,14 @@ _log = logging.getLogger(__name__)
 
 from .config import settings
 from .database import engine, Base
+# Explicit model imports ensure all tables are registered with Base.metadata
+# before create_all runs — even if an API router fails to import
+from .models import (  # noqa: F401
+    Program, UserProfile, WatchlistEntry, ScanResult, ScanState,
+    User, Application, ApplicationStatusHistory,
+    DiscoveredGrant, DiscoveryRun,
+    Grant, EligibilityCriteria, GrantApplication,
+)
 from .api import (
     health, programs, profiles, watchlist, scanner, ranking,
     chatbot, auth, ai, applications, admin, export,
