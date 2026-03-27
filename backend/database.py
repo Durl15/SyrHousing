@@ -2,8 +2,9 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from .config import settings
 
+# Strip any accidental leading whitespace/= characters (Railway copy-paste artifacts)
+_db_url = settings.DATABASE_URL.strip().lstrip("=").strip()
 # Railway Postgres URLs start with postgres:// but SQLAlchemy requires postgresql://
-_db_url = settings.DATABASE_URL
 if _db_url.startswith("postgres://"):
     _db_url = _db_url.replace("postgres://", "postgresql://", 1)
 
